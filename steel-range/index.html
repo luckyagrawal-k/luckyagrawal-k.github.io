@@ -367,8 +367,11 @@ function appSeries(dly,settings){settings=Object.assign({},DEFAULT_SETTINGS,sett
   if(!o.grade&&!o.basis){if(o.commodity=='billet'&&o.market=='mandi_gobindgarh')id='billet_mandi';else if(o.commodity=='billet'&&o.market=='raipur')id='billet_raipur';
    else if(o.commodity=='ingot'&&o.market=='raipur')id='ingot_raipur';else if(o.commodity=='pdri'&&o.market=='raipur')id='pdri_raipur';}
   else if(o.commodity=='kamdhenu_nxt'&&settings.kamdhenu_grades.indexOf(o.grade)>=0){id='kamdhenu';if(o.grade!='basic'&&o.date>=settings.kamdhenu_adjust_from)adj=settings.kamdhenu_adjust;}
-  if(!id)return;var r={date:o.date,price:o.close+adj,wa:true};if(o.high!=o.low){r.high=o.high+adj;r.low=o.low+adj;}
-  var A=S[id];if(A.length&&A[A.length-1].date==o.date){if(o.grade=='10-25mm')A[A.length-1]=r;}else A.push(r);});return S;}
+  // Mandi billet: VIRON posts an hourly "M.S.BILLET" line (grade ms_hourly) and a city-list "MANDI" line (untagged). Use ONE row per day: the hourly line wins when present (its last value = the day's close, usually 18:00); the city-list line only on days without hourly posts.
+  var mb=!id&&o.commodity=='billet'&&o.market=='mandi_gobindgarh'&&o.grade=='ms_hourly'&&!o.basis;if(mb)id='billet_mandi';
+  if(!id)return;var r={date:o.date,price:o.close+adj,wa:true,_mh:mb};if(o.high!=o.low){r.high=o.high+adj;r.low=o.low+adj;}
+  var A=S[id];if(A.length&&A[A.length-1].date==o.date){var P=A[A.length-1];if(id=='billet_mandi'){if(mb||!P._mh)A[A.length-1]=r;}else if(o.grade=='10-25mm')A[A.length-1]=r;}else A.push(r);});
+ for(var k in S)S[k].forEach(function(r){delete r._mh;});return S;}
 // median of the latest day's closes across grades/brands (e.g. Raipur TMT brand list)
 function medianLatest(dly,commodity,market){var L=dly.filter(function(o){return o.commodity==commodity&&(!market||o.market==market);});if(!L.length)return null;var d=L.reduce(function(a,o){return o.date>a?o.date:a;},'');
  var v=L.filter(function(o){return o.date==d;}).map(function(o){return o.close;}).sort(function(a,b){return a-b;}),m=v.length%2?v[(v.length-1)/2]:(v[v.length/2-1]+v[v.length/2])/2;return {date:d,close:m,n:v.length,min:v[0],max:v[v.length-1]};}
@@ -1284,12 +1287,18 @@ function valCollect(d){var map={},ids={'kamdhenu':'kamdhenu','billet_raipur':'bi
  Object.keys(ids).forEach(function(id){map[id]=(typeof rows==='function'?rows(id):[]).filter(function(r){return r.date<=d;});});
  if(WAD&&WAD.length){
   function cl(pred){var by={};WAD.filter(pred).forEach(function(x){if(!x.date||x.date>d)return;if(!by[x.date]||x.grade==='80:20')by[x.date]={date:x.date,price:x.close,grade:x.grade};});return Object.keys(by).sort().map(function(k){return by[k];});}
-  var hms=cl(function(x){return x.commodity=='scrap_hms'&&x.market=='raipur';});
   var h80=cl(function(x){return x.commodity=='scrap_hms'&&x.market=='raipur'&&x.grade=='80:20';});
-  var by={};hms.forEach(function(r){by[r.date]=r;});h80.forEach(function(r){by[r.date]=r;});
+  // Raipur HMS बिना-ग्रेड: VIRON रोज़ दो लाइन देता है (~36k और ~38k = दूसरा ग्रेड)। हर दिन सबसे कम भाव से ₹1,000 तक वाले ही रखें;
+  // अकेला ऊँचा भाव (पिछले चुने भाव से ₹1,500+ ऊपर) दूसरा ग्रेड मानकर छोड़ें (लगातार 3 दिन से ज़्यादा नहीं)। कच्चा data नहीं बदलता।
+  var hu=(function(){var B={};(WA&&WA.entries||[]).forEach(function(e){if(e.commodity!='scrap_hms'||e.market!='raipur'||e.grade||(e.kind||'rate')!='rate'||(e.confidence!=null&&e.confidence<0.6)||(e.basis&&e.basis!='exw')||!isFinite(+e.rate))return;var k=String(e.datetime).slice(0,10);if(k>d)return;(B[k]=B[k]||[]).push(e);});
+   var h8={};h80.forEach(function(r){h8[r.date]=r.price;});var out=[],prev=null,drops=0;
+   Object.keys(B).concat(Object.keys(h8)).filter(function(k,i,a){return a.indexOf(k)===i;}).sort().forEach(function(k){if(h8[k]!=null){prev=h8[k];drops=0;}var L=B[k];if(!L)return;
+    var mn=Math.min.apply(null,L.map(function(e){return +e.rate;}));L=L.filter(function(e){return +e.rate<=mn+1000;}).sort(function(a,b){return (Date.parse(a.datetime)-Date.parse(b.datetime))||(b.rate-a.rate);});
+    var c=+L[L.length-1].rate;if(h8[k]==null&&prev!=null&&c>prev+1500&&drops<3){drops++;return;}out.push({date:k,price:c,grade:null});if(h8[k]==null){prev=c;drops=0;}});return out;})();
+  var by={};hu.forEach(function(r){by[r.date]=r;});h80.forEach(function(r){by[r.date]=r;});
   map.hms_raipur=Object.keys(by).sort().map(function(k){return by[k];});
   // HMS: बिना-ग्रेड Raipur HMS (WhatsApp, पहले 80:20 भाव से पहले) → 80:20 बराबर = − median(बिना-ग्रेड − 80:20) जिन दिनों दोनों हैं
-  var hu=cl(function(x){return x.commodity=='scrap_hms'&&x.market=='raipur'&&!x.grade;}),hb={};h80.forEach(function(r){hb[r.date]=r.price;});
+  var hb={};h80.forEach(function(r){hb[r.date]=r.price;});
   var gs=hu.filter(function(r){return hb[r.date]!=null;}).map(function(r){return r.price-hb[r.date];}).sort(function(a,b){return a-b;}),f80=h80.length?h80[0].date:null;
   if(gs.length>=3&&f80){var gap=gs.length%2?gs[(gs.length-1)/2]:(gs[gs.length/2-1]+gs[gs.length/2])/2;NET_HMS_GAP=gap;
    map.hms_raipur=map.hms_raipur.map(function(r){return (r.date<f80&&r.grade!=='80:20')?{date:r.date,price:r.price-gap,grade:'80:20~',conv:gap}:r;});}
