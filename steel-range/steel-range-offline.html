@@ -14552,11 +14552,11 @@ function valBand(kind,A,B){if(!A||!B)return null;
  return {lo:lo,A:hiA,hi:hiA+VAL.marginHi,mid:hiA+VAL.marginMid,marginLo:VAL.marginLo,marginMid:VAL.marginMid,marginHi:VAL.marginHi,B:lo};}
 function valPurchase(kam,spreads){if(!kam||!kam.verdict)return {code:'wait',hi:'इंतज़ार',en:'Wait',why:'Kamdhenu भाव उपलब्ध नहीं',level:null};
  var v=kam.verdict.code,tr=kam.trend||{},p=kam.price,band=kam.verdict.band,st=kam.stats||{};
- var add=0,lAdd=(kam.list!=null&&kam.price!=null)?(kam.list-kam.price):0; // basic view: levels on basic (list − ₹6,000 from 23-Sep); cost band is on list, so band→basic = band − lAdd
+ var add=0,lAdd=0; // basic view: levels and cost comparison both on basic (list − ₹6,000 from 23-Sep)
  var supRaw=tr.prior30lo!=null?tr.prior30lo:(st.d30&&st.d30.min!=null?st.d30.min:null);
  var sup=supRaw!=null?Math.round(supRaw+add):null,level,code,why,en,hi;
  if(v==='overvalued'){code='wait';hi='इंतज़ार';en='Wait';level=sup||(band?Math.round(band.A-lAdd):null);
-  why='महँगा (list भाव A लागत+मार्जिन के ऊपर)। ख़रीद स्तर: '+(level?('₹'+level.toLocaleString('en-IN')+(sup?' (30-दिन low / support)':' (A लागत के पास)')):'support/A लागत')+'.';}
+  why='Basic महँगा (A लागत+मार्जिन के ऊपर)। ख़रीद स्तर: '+(level?('₹'+level.toLocaleString('en-IN')+(sup?' (30-दिन low / support)':' (A लागत के पास)')):'support/A लागत')+'.';}
  else if(v==='undervalued'&&tr.type!=='down'){code='buy';hi='अभी खरीदें';en='Buy now';level=Math.round(p);
   why='सस्ता है और ट्रेंड टूटा नहीं। मौजूदा basic ₹'+Math.round(p).toLocaleString('en-IN')+' पर लें'+(sup&&sup<Math.round(p)-200?('; और गिरावट पर ₹'+sup.toLocaleString('en-IN')+' तक और'):'')+'.';}
  else if(v==='undervalued'){code='partial';hi='थोड़ा खरीदें';en='Buy partially';level=Math.round(p);
@@ -14568,7 +14568,7 @@ function valPurchase(kam,spreads){if(!kam||!kam.verdict)return {code:'wait',hi:'
  return {code:code,hi:hi,en:en,why:why,level:level,list:p,support:sup};}
 function valuate(series,opts){opts=opts||{};var date=opts.date,A=opts.A,B=opts.B,out={date:date,products:[],spreads:[],purchase:null};
  var specs=[
-  {id:'kamdhenu',name:'Kamdhenu basic (list − ₹6,000)',kind:'tmtLanded',kam:true,note:'भाव basic = 10–25mm list − ₹6,000 (23-Sep से; उससे पहले पोस्ट वाला भाव ही basic था)। लागत से तुलना (सस्ता/महँगा) list पर, क्योंकि mill की असली बिक्री list है। Factory net = list − ₹1,100 − ₹500।'},
+  {id:'kamdhenu',name:'Kamdhenu basic (list − ₹6,000)',kind:'tmtLanded',kam:true,note:'भाव basic = 10–25mm list − ₹6,000 (23-Sep से; उससे पहले पोस्ट वाला भाव ही basic था)। लागत से तुलना (सस्ता/महँगा) भी basic पर — A/B लागत में size extra नहीं जुड़ा, इसलिए basic से सीधी तुलना। Factory net = list − ₹1,100 − ₹500।'},
   {id:'billet_raipur',name:'Raipur Billet',kind:'billet'},
   {id:'ingot_raipur',name:'Raipur Ingot',kind:'billet',note:'Ingot की अलग conversion लागत नहीं; Raipur billet A/B लागत सिर्फ़ संदर्भ।'},
   {id:'pdri_raipur',name:'Raipur Sponge PDRI',kind:'sponge'},
@@ -14580,7 +14580,8 @@ function valuate(series,opts){opts=opts||{};var date=opts.date,A=opts.A,B=opts.B
  ];
  specs.forEach(function(sp){var rows=series[sp.id]||[],st=valStats(rows,date),tr=valTrend(rows,date),band=sp.kind?valBand(sp.kind,A,B):null;
   var price=st.ok?st.price:null,list=null,factory=null,cmp=price;
-  if(sp.kam&&st.ok){list=VAL.kamListAdd(st.last,st.price);factory=list-VAL.kamDist-VAL.kamRoyalty;cmp=list;st=Object.assign({},st,{list:list,factory:factory,adj:st.price});}
+  if(sp.kam&&st.ok){list=VAL.kamListAdd(st.last,st.price);factory=list-VAL.kamDist-VAL.kamRoyalty;cmp=st.price; // basic vs A/B cost (cost has no size extra)
+ st=Object.assign({},st,{list:list,factory:factory,adj:st.price});}
   var ver=price==null?{code:'fair',hi:'—',en:'n/a',reasons:['इस तारीख तक भाव नहीं'],limited:true,cost:null,stat:null,clash:false,band:band,stats:st}:{code:null};
   if(price!=null)ver=valVerdict(cmp,band,st);
   var fwd=tr.ok?valForward(rows,st.last||date,tr.type):{ok:false};
@@ -15011,8 +15012,8 @@ function fvMarket(d){var M={},o;
  o=rowAt('billet_raipur',d);M.billet=FV.mkt.billet!==''?{v:+FV.mkt.billet,s:'आपका डाला'}:o?{v:o.price,s:'Raipur Billet '+dmy(o.date)+(o.wa?' 📲':'')}:null;
  o=atOrBefore(tmtSeries(),d);M.tmt=FV.mkt.tmt!==''?{v:+FV.mkt.tmt,s:'आपका डाला'}:o?{v:o.price,s:'Raipur TMT (secondary brands) का बीच का भाव ('+o.n+' भाव, '+fmt(o.min)+'–'+fmt(o.max).replace('₹','')+') '+dmy(o.date)+' 📲'}:null;
  var kl=WAD.filter(function(x){return x.commodity=='kamdhenu_nxt'&&x.grade=='10-25mm'&&x.date<=d;});o=kl.length?kl[kl.length-1]:null;
- if(FV.mkt.kam!=='')M.kam={v:+FV.mkt.kam,s:'आपका डाला'};else if(o)M.kam={v:o.close,basic:RL.VAL.kamBasic(o.date,o.close),s:'Kamdhenu 10-25mm list '+fmt(o.close)+' '+dTxt(o)+' — लागत से तुलना list पर'};
- else{var k=rowAt('kamdhenu',d);if(k){var adj=k.date>=RL.DEFAULT_SETTINGS.kamdhenu_adjust_from?-RL.DEFAULT_SETTINGS.kamdhenu_adjust:0;M.kam={v:k.price+adj,basic:k.price,s:'Kamdhenu tab '+dmy(k.date)+(adj?' (list '+fmt(k.price+adj)+' = basic + ₹6,000 — लागत से तुलना list पर)':'')};}}
+ if(FV.mkt.kam!=='')M.kam={v:+FV.mkt.kam,s:'आपका डाला'};else if(o)M.kam={v:RL.VAL.kamBasic(o.date,o.close),basic:RL.VAL.kamBasic(o.date,o.close),s:'Kamdhenu basic = 10-25mm list '+fmt(o.close)+' − ₹6,000 · '+dTxt(o)};
+ else{var k=rowAt('kamdhenu',d);if(k){var adj=k.date>=RL.DEFAULT_SETTINGS.kamdhenu_adjust_from?-RL.DEFAULT_SETTINGS.kamdhenu_adjust:0;M.kam={v:k.price,basic:k.price,s:'Kamdhenu tab '+dmy(k.date)+(adj?' (basic; list '+fmt(k.price+adj)+')':'')};}}
  return M;}
 function srcTag(p){if(!p||p.prio===0)return '<span class="est">अनुमान — बदलें</span>';return '<span class="ok">'+(p.prio==1?'📲 ':p.prio==3?'✍ ':'📄 ')+dmy(p.date)+'</span>';}
 function zTag(z){if(!z)return '<span class="est">बाज़ार भाव नहीं</span>';var col={distress:'#1d5fa8',normal:'#1d7a38',heated:'#b02a1e'}[z.code];
@@ -15027,7 +15028,7 @@ function fvRender(){var el=document.getElementById('fvpanel');INS=RL.inputSeries
  var st=[{id:'sponge',name:'Sponge (PDRI, ex-plant)',A:A.sponge.total,B:B.sponge.total,m:M.sponge,H:+th.sponge,au:'A: नकद '+fmt(AU.A.sponge.cash)+' · पूरी '+fmt(AU.A.sponge.full)+'<br>B: नकद '+fmt(AU.B.sponge.lo)+'–'+fmt(AU.B.sponge.hi).replace('₹','')+' · पूरी '+fmt(AU.B.sponge.fullLo)+'–'+fmt(AU.B.sponge.fullHi).replace('₹','')},
   {id:'billet',name:'Billet (ex-plant)',A:A.billet.total,B:B.billet.total,m:M.billet,H:+th.billet,au:'A: नकद '+fmt(AU.A.billet.cash)+' · पूरी '+fmt(AU.A.billet.full)+'<br>B: पूरी '+fmt(AU.B.billet.fullLo)+'–'+fmt(AU.B.billet.fullHi).replace('₹','')},
   {id:'tmt',name:'TMT (ex-plant)',A:A.tmt.total,B:B.tmt.total,m:M.tmt,H:+th.tmt,au:'A: —<br>B: long steel नकद '+fmt(AU.B.longSteel.cash)+' (पूरी लागत इससे ऊपर)'},
-  {name:'TMT Jabalpur पहुँच (भाड़ा सहित)',A:A.tmt.landed,B:B.tmt.landed,m:M.kam,note:'branded Kamdhenu से तुलना — brand premium भी शामिल',au:'—'}];
+  {name:'TMT Jabalpur पहुँच (भाड़ा सहित)',A:A.tmt.landed,B:B.tmt.landed,m:M.kam,note:'Kamdhenu basic (list − ₹6,000) से तुलना — brand premium भी शामिल; लागत में size extra नहीं',au:'—'}];
  var h='<h3>⚖ लागत बनाम बाज़ार (Fair Value vs Market) — ₹/टन, GST बिना</h3><div class="alert" style="font-size:13px">दो plant की लागत (<b>सब Raipur आधार</b>): <b>B = बड़ा integrated plant की पूरी लागत</b> (captive pellet = Raipur बाज़ार − ₹2,200, SECL/blend coal, captive बिजली ₹4, घिसाई-ब्याज-ओवरहेड सहित) = उद्योग की <b>सबसे नीची पूरी लागत (floor)</b>; <b>A = छोटा sponge plant</b> (default <b>100% iron ore lumps</b> — <b>'+fvFe64Txt()+'</b>, खपत भारित '+fvLumpsFTxt()+' t/t; Fe64 हिस्सा % और lumps/pellet मिक्स ⚖ सेटिंग में बदल सकते हैं; blended coal ₹6,000 जिसका 40% हिस्सा Indo 4200 GAR <b>Raipur-landed</b> index से चलता है, lumps पर coal खपत 1.5 t/t) = <b>किनारे की लागत</b>। बाज़ार B से गरम-सीमा (Sponge ₹29,000 / Billet ₹44,000) के बीच = सामान्य · उससे ऊपर (लागत बढ़े बिना) = गरम/सट्टा · B से नीचे = संकट। हर लागत-आँकड़ा तारीख वाला है: चुनी तारीख पर उस दिन या उससे पहले का आखिरी भाव लगता है। Default FY26 audit report (Vaswani, Sarda, Shyam Metallics) से मिलाए गए अनुमान हैं।</div>';
  h+=fvV5Note();
  h+='<div class="row" style="margin:6px 0">किस तारीख का हिसाब: <input type="date" id="fv_asof" value="'+d+'"><button class="g" onclick="FV.asof=\'\';saveFV();fvRender()">आखिरी भाव वाली तारीख</button></div>';
@@ -15185,14 +15186,14 @@ function valRender(){var el=document.getElementById('valpanel');if(!el)return;
  function mom(t){if(!t||!t.mom)return '—';function s(x){return x==null?'—':((x>0?'+':'')+x.toFixed(1)+'%');}return '5द '+s(t.mom.d5)+' · 15द '+s(t.mom.d15)+' · 30द '+s(t.mom.d30)+' · 60द '+s(t.mom.d60);}
  function trn(t){if(!t||!t.ok)return '—';var x=t.tHi+(t.tStr?' · '+t.tStr:'');if(t.break=='breakout')x+=' · ब्रेकआउट';if(t.break=='breakdown')x+=' · ब्रेकडाउन';return x;}
  var h='<h3>📊 मूल्यांकन / Valuation — भाव vs लागत और इतिहास</h3>';
- h+='<div class="alert" style="font-size:13px">नियम (केवल फ़ाइल के भाव + A/B लागत): <b>B पूरी लागत से नीचे</b> = सस्ता; <b>A पूरी लागत + ₹1,800 मार्जिन से ऊपर</b> = महँगा। बैंड के अंदर हाल के 60-दिन percentile / z-score से झुकाव ( &lt;20% या z≤−1 = सस्ता; &gt;80% और A+₹1,000 से ऊपर = महँगा)। छोटे plant का सामान्य मुनाफ़ा ₹500–1,800/t (MKSPL TMT roller PAT ~₹1,000/t)। Kamdhenu factory net = list − ₹1,100 डिस्ट्रीब्यूटर − ₹500 रॉयल्टी। 23-Sep से Kamdhenu चार्ट −₹6,000 है; मूल्यांकन list भाव (₹6,000 वापस) पर है।</div>';
+ h+='<div class="alert" style="font-size:13px">नियम (केवल फ़ाइल के भाव + A/B लागत): <b>B पूरी लागत से नीचे</b> = सस्ता; <b>A पूरी लागत + ₹1,800 मार्जिन से ऊपर</b> = महँगा। बैंड के अंदर हाल के 60-दिन percentile / z-score से झुकाव ( &lt;20% या z≤−1 = सस्ता; &gt;80% और A+₹1,000 से ऊपर = महँगा)। छोटे plant का सामान्य मुनाफ़ा ₹500–1,800/t (MKSPL TMT roller PAT ~₹1,000/t)। Kamdhenu factory net = list − ₹1,100 डिस्ट्रीब्यूटर − ₹500 रॉयल्टी। 23-Sep से Kamdhenu का भाव और मूल्यांकन दोनों basic (10–25mm list − ₹6,000) पर हैं; A/B लागत में size extra नहीं, इसलिए basic से सीधी तुलना।</div>';
  h+='<div class="row" style="margin:6px 0">किस तारीख का मूल्यांकन: <input type="date" id="val_asof" value="'+d+'"><button class="g" onclick="FV.asof=\'\';saveFV();valRender()">आखिरी भाव वाली तारीख</button></div>';
  h+='<div class="vrec '+(cls[P.code]||'v-mid')+'"><b>अभी खरीदें? — Kamdhenu NXT TMT (जबलपुर)</b><div style="font-size:22px;margin:4px 0">'+SR.esc(P.hi||'—')+'</div><div style="font-size:14px">'+SR.esc(P.why||'')+(P.level?('<br>ख़रीद स्तर: <b>basic '+fmt(P.level)+'</b> (list − ₹6,000)'):'')+'</div></div>';
  h+='<div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>आज का भाव</th><th>Fair बैंड (B – A+मार्जिन)</th><th>फैसला</th><th>ट्रेंड</th><th>Momentum</th><th>इतिहास</th></tr>';
  V.products.forEach(function(p){var px=p.price,v=p.verdict||{},bd=p.band,stale=p.stale?(' <small>⚠ '+p.stale+' दिन पुराना</small>'):'';
   var band=bd? (fmt(bd.lo)+' – '+fmt(bd.hi)+'<br><small>A '+fmt(bd.A)+'</small>'):'<small>लागत बैंड नहीं — सिर्फ़ इतिहास</small>';
   var rec=v.recent,hist=(p.n?p.n+' दिन':'—')+(p.first?' ('+dmy(p.first)+'–'+dmy(p.asof)+')':'')+(rec?('<br><small>'+rec.lab+' pctl '+Math.round(rec.pct)+(p.stats&&p.stats.pct!=null&&p.n>=30?(' · पूरी '+Math.round(p.stats.pct)+'%'):'')+'</small>'):'');
-  var show=px==null?'—':(fmt(px)+(p.list!=null?'<br><small>basic (list − ₹6,000) · list '+fmt(p.list)+' — लागत तुलना list पर</small>':'')+stale);
+  var show=px==null?'—':(fmt(px)+(p.list!=null?'<br><small>basic (list − ₹6,000) · list '+fmt(p.list)+' — लागत तुलना basic पर</small>':'')+stale);
   h+='<tr><td><b>'+SR.esc(p.name)+'</b>'+(p.note?'<br><small>'+SR.esc(p.note)+'</small>':'')+'</td><td>'+show+'</td><td>'+band+'</td><td><span class="'+(cls[v.code]||'')+'" style="padding:2px 8px;border-radius:4px;font-weight:bold">'+SR.esc(v.hi||'—')+'</span><br><small>'+SR.esc((v.reasons||[]).join('; '))+'</small></td><td>'+trn(p.trend)+'</td><td>'+mom(p.trend)+'</td><td>'+hist+'</td></tr>';});
  h+='</table></div>';
  if(V.spreads&&V.spreads.length){h+='<h3>स्प्रेड (तैयार माल vs कच्चा)</h3><div style="overflow:auto"><table class="fvt"><tr><th>स्प्रेड</th><th>फ़र्क ₹/t</th><th></th></tr>';
@@ -15303,7 +15304,7 @@ function msBuild(dd){INS=RL.inputSeries(WA&&WA.inputs||[],FV.manual,WAD);var d=d
  O.raw=msRaw(d,IA,IB);
  O.cost={A:{sponge:A.sponge.total,billet:A.billet.total,tmt:A.tmt.total,landed:A.tmt.landed},B:{sponge:B.sponge.total,billet:B.billet.total,tmt:B.tmt.total,landed:B.tmt.landed}};
  var VV=RL.valuate(V,{date:d,A:A,B:B});O.valPurchase=VV.purchase;
- O.val=VV.products.map(function(p){var v=p.verdict||{};return {id:p.id,name:p.name,price:p.price,list:p.list,asof:p.asof,stale:p.stale,code:p.price==null?'na':v.code,hi:p.price==null?'रेट नहीं मिला':v.hi,reason:(p.list!=null?'list '+fmt(p.list)+' पर लागत से तुलना: ':'')+(v.reasons||[]).slice(0,2).join(' · '),n:p.n||0,first:p.first||null,band:p.band?{lo:p.band.lo,hi:p.band.hi}:null,fwd:p.forward,trend:p.trend};});
+ O.val=VV.products.map(function(p){var v=p.verdict||{};return {id:p.id,name:p.name,price:p.price,list:p.list,asof:p.asof,stale:p.stale,code:p.price==null?'na':v.code,hi:p.price==null?'रेट नहीं मिला':v.hi,reason:(p.list!=null?'basic पर लागत से तुलना (list '+fmt(p.list)+'): ':'')+(v.reasons||[]).slice(0,2).join(' · '),n:p.n||0,first:p.first||null,band:p.band?{lo:p.band.lo,hi:p.band.hi}:null,fwd:p.forward,trend:p.trend};});
  O.kam=msKam(S,d,V);
  var TS=[['Raipur Billet',S.billet_raipur],['Kamdhenu NXT basic',S.kam_basic],['Raipur Sponge PDRI',S.pdri_raipur],['Mandi Billet',S.billet_mandi],['Raipur HMS',S.hms_raipur]];
  O.trend=TS.map(function(t){return msTrendRow(t[0],t[1],d);});
@@ -15551,7 +15552,7 @@ function saMargins(V,d){var key='m|'+d+'|'+(V.billet_raipur||[]).length+'|'+(V.k
  function cost(P,dt){var k=P+dt;if(!cc[k]){var c=RL.fvCalc(RL.inputsAt(INS,P,dt).v),x=c.inp,mix=Math.max(0,Math.min(100,x.scrapMix))/100;
   cc[k]={spMet:x.spF*(1-mix),bOther:c.billet.scrap+c.billet.ferro,bConv:c.billet.power+c.billet.refr+c.billet.lab+c.billet.oh,blF:x.blF,tConv:c.tmt.total-c.tmt.billet};}return cc[k];}
  var B=saJoin(bl,pd).map(function(r){var o={date:r.date,billet:r.a,pdri:r.b};['A','B'].forEach(function(P){var c=cost(P,r.date);o['raw'+P]=c.spMet*r.b+c.bOther;o['conv'+P]=c.bConv;o[P]=r.a-o['raw'+P]-o['conv'+P];});return o;});
- var T=saJoin(km,bl).map(function(r){var list=RL.VAL.kamListAdd(r.date,r.a),real=list-MSP.channel,o={date:r.date,list:list,real:real,billet:r.b};['A','B'].forEach(function(P){var c=cost(P,r.date);o['raw'+P]=c.blF*r.b;o['conv'+P]=c.tConv;o[P]=real-o['raw'+P]-o['conv'+P];o[P+'adj']=o[P]-(list-r.a);});return o;});
+ var T=saJoin(km,bl).map(function(r){var list=RL.VAL.kamListAdd(r.date,r.a),real=r.a-MSP.channel,o={date:r.date,list:list,basic:r.a,real:real,billet:r.b};['A','B'].forEach(function(P){var c=cost(P,r.date);o['raw'+P]=c.blF*r.b;o['conv'+P]=c.tConv;o[P]=real-o['raw'+P]-o['conv'+P];o[P+'list']=o[P]+(list-r.a);});return o;});
  return SA_CACHE[key]={B:B,T:T};}
 function saPctRank(arr,x){if(!arr.length)return null;var lo=0,eq=0;arr.forEach(function(v){if(v<x)lo++;else if(v===x)eq++;});return (lo+0.5*eq)/arr.length*100;}
 // ---- 7 regression ----
@@ -15628,10 +15629,10 @@ function saBuild(){var d=typeof pvAsof=='function'?pvAsof():fvAsof(),V=valCollec
  var M=saMargins(V,d);b='';
  function mrow(name,L,priceTxt){if(L.length<30)return '<tr><td>'+name+'</td><td colspan="3"><small>इतिहास कम ('+L.length+' दिन)</small></td></tr>';var z=L[L.length-1],cut2=addDays(z.date,-730),Hs=L.filter(function(x){return x.date>=cut2;}),ka=z.Aadj!=null?'Aadj':'A',kb2=z.Badj!=null?'Badj':'B',pa=saPctRank(Hs.map(function(x){return x[ka];}),z[ka]),pb=saPctRank(Hs.map(function(x){return x[kb2];}),z[kb2]);
   var v=pa<20?['मार्जिन बहुत कम — भाव का फ़र्श पास, और गिरावट की गुंजाइश कम','buy']:pa>80?['मार्जिन बहुत ज़्यादा — भाव गिरने की गुंजाइश','wait']:['मार्जिन सामान्य',''];
-  return '<tr><td><b>'+name+'</b><br><small>'+priceTxt(z)+' ('+dmy(z.date)+')</small></td><td>A: <b>'+fmt(z.A)+'</b><br><small>कच्चा '+fmt(z.rawA)+' + conversion '+fmt(z.convA)+'</small></td><td>B: <b>'+fmt(z.B)+'</b><br><small>कच्चा '+fmt(z.rawB)+' + conversion '+fmt(z.convB)+'</small></td><td>A pctl <b>'+Math.round(pa)+'</b> · B '+Math.round(pb)+'<br><small>'+Hs.length+' दिन'+(z.Aadj!=null?'; basic आधार पर A '+fmt(z.Aadj)+', B '+fmt(z.Badj):'')+'</small><div class="sug '+v[1]+'" style="font-size:12px;padding:4px">'+v[0]+'</div></td></tr>';}
+  return '<tr><td><b>'+name+'</b><br><small>'+priceTxt(z)+' ('+dmy(z.date)+')</small></td><td>A: <b>'+fmt(z.A)+'</b><br><small>कच्चा '+fmt(z.rawA)+' + conversion '+fmt(z.convA)+'</small></td><td>B: <b>'+fmt(z.B)+'</b><br><small>कच्चा '+fmt(z.rawB)+' + conversion '+fmt(z.convB)+'</small></td><td>A pctl <b>'+Math.round(pa)+'</b> · B '+Math.round(pb)+'<br><small>'+Hs.length+' दिन'+(z.Alist!=null&&z.Alist!==z.A?'; 10–25mm list पर A '+fmt(z.Alist)+', B '+fmt(z.Blist):'')+'</small><div class="sug '+v[1]+'" style="font-size:12px;padding:4px">'+v[0]+'</div></td></tr>';}
  b='<div style="overflow:auto"><table class="fvt"><tr><th>स्टेज</th><th>A (छोटा plant)</th><th>B (बड़ा plant)</th><th>इतिहास में</th></tr>'+
-  mrow('Billet मार्जिन',M.B,function(z){return 'billet '+fmt(z.billet)+' · PDRI '+fmt(z.pdri);})+mrow('TMT मार्जिन (Kamdhenu)',M.T,function(z){return 'basic '+fmt(z.list-6000)+' (list '+fmt(z.list)+') − channel '+fmt(MSP.channel)+' · billet '+fmt(z.billet);})+'</table></div><div style="font-size:11px;color:#666">TMT मार्जिन mill की असली बिक्री (list = basic + ₹6,000 size extra) पर; percentile basic आधार पर, ताकि 23-Sep से पहले के दिनों से सही तुलना हो।</div>';
- h+=sec('2️⃣ Mill का मार्जिन (बाज़ार भाव − कच्चा माल − conversion)',b+saHelp('Billet: Raipur billet − (sponge खपत × PDRI बाज़ार भाव + scrap + ferro) − conversion (बिजली, refractory, लेबर, overhead)। TMT: (Kamdhenu list − ₹'+Math.round(MSP.channel).toLocaleString('en-IN')+' channel) − (billet खपत × Raipur billet) − rolling खर्च। A/B लागत ⚖ tab के inputs से (जिस तारीख का input नहीं, वहाँ default)। मार्जिन बहुत कम = mill घाटे के पास, भाव और गिरना मुश्किल; बहुत ज़्यादा = गिरने की जगह।'));
+  mrow('Billet मार्जिन',M.B,function(z){return 'billet '+fmt(z.billet)+' · PDRI '+fmt(z.pdri);})+mrow('TMT मार्जिन (Kamdhenu)',M.T,function(z){return 'basic '+fmt(z.basic)+' (list '+fmt(z.list)+') − channel '+fmt(MSP.channel)+' · billet '+fmt(z.billet);})+'</table></div><div style="font-size:11px;color:#666">TMT मार्जिन basic भाव पर (basic − ₹2,500 channel − billet − rolling), ⚖ लागत तुलना जैसा ही आधार; 10–25mm size पर mill को ₹6,000 extra मिलता है (छोटे अक्षर में list वाला मार्जिन)। Percentile भी basic पर।</div>';
+ h+=sec('2️⃣ Mill का मार्जिन (बाज़ार भाव − कच्चा माल − conversion)',b+saHelp('Billet: Raipur billet − (sponge खपत × PDRI बाज़ार भाव + scrap + ferro) − conversion (बिजली, refractory, लेबर, overhead)। TMT: (Kamdhenu basic − ₹'+Math.round(MSP.channel).toLocaleString('en-IN')+' channel) − (billet खपत × Raipur billet) − rolling खर्च। A/B लागत ⚖ tab के inputs से (जिस तारीख का input नहीं, वहाँ default)। मार्जिन बहुत कम = mill घाटे के पास, भाव और गिरना मुश्किल; बहुत ज़्यादा = गिरने की जगह।'));
  // ---- 3 day-of-week ----
  var WD=['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'];b='<div style="overflow:auto"><table class="fvt"><tr><th>माल</th>'+[1,2,3,4,5,6].map(function(k){return '<th>'+WD[k]+'</th>';}).join('')+'</tr>';
  ['kamdhenu','billet_raipur','pdri_raipur','billet_mandi'].forEach(function(id){var r=I[id].r,cut3=r.length?addDays(r[r.length-1].date,-730):'',ch={},cnt={},wk={},cheap={},nw=0;
