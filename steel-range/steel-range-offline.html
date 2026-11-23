@@ -15082,7 +15082,7 @@ function pvVol(L,d){var r=(L||[]).filter(function(x){return x&&x.date&&x.date<=d
  o.rollN=roll.length;
  if(r.length<PV_MIN){o.lvlWhy='स्तर (कम/मध्यम/ज़्यादा) के लिए कम से कम '+PV_MIN+' दिन का इतिहास चाहिए, अभी '+r.length+' दिन';}
  else{var lo=0,eq=0;roll.forEach(function(x){if(x<o.sd20)lo++;else if(x===o.sd20)eq++;});o.pctl=(lo+0.5*eq)/roll.length*100;
-  o.lvl=o.pctl<33?'low':o.pctl<=66?'mid':'high';o.lvlHi={low:'कम',mid:'मध्यम',high:'ज़्यादा'}[o.lvl];}
+  o.lvl=o.pctl<33?'low':o.pctl<=66?'mid':'high';o.lvlHi=o.pctl>90?'बहुत ज़्यादा':{low:'कम',mid:'मध्यम',high:'ज़्यादा'}[o.lvl];}
  o.ok=true;return o;}
 function pvSpark(sp){if(!sp||!sp.length)return '';var mx=0;sp.forEach(function(x){mx=Math.max(mx,Math.abs(x.abs));});if(!mx)mx=1;var w=4,g=1,H=28,W=sp.length*(w+g),s='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block;margin-top:3px"><line x1="0" y1="'+H/2+'" x2="'+W+'" y2="'+H/2+'" stroke="#ccc" stroke-width="0.5"/>';
  sp.forEach(function(x,i){var h=Math.max(1,Math.abs(x.abs)/mx*(H/2-1)),y=x.abs>=0?H/2-h:H/2;s+='<rect x="'+i*(w+g)+'" y="'+y.toFixed(1)+'" width="'+w+'" height="'+h.toFixed(1)+'" fill="'+(x.abs>=0?'#2a9d4b':'#c0392b')+'"/>';});return s+'</svg>';}
@@ -15107,9 +15107,13 @@ function pvBuild(){var O=msBuild(pvAsof()),d=O.asof,V=msSeries(d)._V,out=[];
  return {asof:d,items:out};}
 function pvZone(o){if(!o.type)return '—';var z={up:'तेज़ी',down:'मंदी',sideways:'साइडवेज़ (स्थिर)'}[o.type];var c={up:'#155d27',down:'#8a1c1c',sideways:'#1f3b63'}[o.type];return '<b style="color:'+c+'">'+z+'</b>'+(o.tStr?'<br><small>'+o.tStr+'</small>':'');}
 function pvLvl(v){if(!v||!v.ok)return '<small>'+SR.esc(v&&v.why||'इतिहास कम')+'</small>';if(!v.lvl)return '<small>इतिहास कम — '+SR.esc(v.lvlWhy||'')+'</small>';
- var c={low:'v-und',mid:'v-mid',high:'v-ovr'}[v.lvl];return '<span class="'+c+'" style="padding:2px 8px;border-radius:4px;font-weight:bold">'+v.lvlHi+'</span><br><small>'+Math.round(v.pctl)+'वाँ percentile</small>';}
+ var c={low:'v-und',mid:'v-mid',high:'v-ovr'}[v.lvl];return '<span class="'+c+'" style="padding:2px 8px;border-radius:4px;font-weight:bold">'+v.lvlHi+' ('+Math.round(v.pctl)+'/100)</span><br><small>'+Math.round(v.pctl)+'वाँ percentile</small>';}
+function pvBand(p){if(p==null)return null;if(p<33)return {hi:'कम',mood:'शांत',use:'बड़ा सौदा कम जोखिम',quote:'5–7 दिन',stock:'ज़रूरत हो तो बड़ा stock रख सकते हैं'};if(p<=66)return {hi:'मध्यम',mood:'सामान्य',use:'रोज़ की तरह काम',quote:'3–4 दिन',stock:'सामान्य stock'};if(p<=90)return {hi:'ज़्यादा',mood:'सावधानी',use:'किस्तों में ख़रीद',quote:'1–2 दिन',stock:'stock कम रखें, किस्तों में'};return {hi:'बहुत ज़्यादा',mood:'ख़तरा',use:'बड़ा stock नहीं, रोज़ भाव देखें',quote:'उसी दिन का',stock:'सिर्फ़ ज़रूरत भर'};}
+function pvTrust(n){return n>=200?'<b style="color:#155d27">अच्छा भरोसा</b>':n>=100?'<b style="color:#1f3b63">ठीक भरोसा</b>':n>=50?'<b style="color:#7a5a00">थोड़ा कम भरोसा</b>':'<b style="color:#a33">कमज़ोर भरोसा</b>';}
+function pvSdRs(o){var v=o.vol;return (v&&v.ok&&v.sd20!=null&&o.price)?v.sd20/100*o.price:null;}
+function pvRs(x){return x==null?'—':'₹'+(Math.round(x/10)*10).toLocaleString('en-IN');}
 function pvP(x){return x==null?'—':((x>0?'+':'')+x.toFixed(2)+'%');}
-function pvFw(f,k){var s=f&&f[k];if(!s)return '—';return '<span style="white-space:nowrap">⬆ '+Math.round(s.pos)+'%</span> <span style="white-space:nowrap">⬇ '+Math.round(100-s.pos)+'%</span><br><small>औसत '+pvP(s.mean)+' · n='+s.n+'</small>';}
+function pvFw(f,k){var s=f&&f[k];if(!s)return '—';return '<span style="white-space:nowrap">⬆ '+Math.round(s.pos)+'%</span> <span style="white-space:nowrap">⬇ '+Math.round(100-s.pos)+'%</span><br><small>औसत '+pvP(s.mean)+' · n='+s.n+'</small><br><small>'+pvTrust(s.n)+'</small>';}
 function pvName(o){return '<b>'+SR.esc(o.name)+'</b><br><small>'+(o.price!=null?fmt(o.price)+(o.asof?' ('+dmy(o.asof)+')':''):'रेट नहीं मिला')+(o.stale?' ⚠ '+o.stale+' दिन पुराना':'')+'</small>';}
 var PV_FOOT_P='<small>Probability (संभावना): पुराने इतिहास में जिन दिनों ट्रेंड (zone) आज जैसा था, उनके 15/30 दिन बाद भाव कितनी बार बढ़ा/घटा। n = ऐसे मिलते-जुलते दिन। भरोसे के लिए कम से कम 80 दिन का इतिहास और 10 मिलते-जुलते दिन चाहिए। ये गणितीय संकेत हैं, सलाह नहीं।</small>';
 var PV_FOOT_V='<small>Volatility (उतार-चढ़ाव): भाव रोज़ कितना और कितनी तेज़ी से ऊपर-नीचे होता है। "20 दिन औसत बदलाव" = पिछले 20 भाव-दिनों में एक दिन का औसत फ़र्क (₹)। "SD %" = रोज़ के % बदलाव का फैलाव — जितना बड़ा, उतने ज़्यादा झटके। स्तर इसी माल के अपने पूरे इतिहास से तुलना: 33वें percentile से नीचे = कम, 33–66 = मध्यम, 66 से ऊपर = ज़्यादा। ज़्यादा उतार-चढ़ाव में एक साथ बड़ा stock लेना जोखिम भरा है। सिर्फ़ असली रोज़ के भाव गिने (BASE इतिहास + WhatsApp; internet वाला पुराना/अनुमानित इतिहास नहीं); बीच में छुट्टी हो तो अगले भाव-दिन से तुलना। किसी एक दिन भाव 4% से ज़्यादा उछलकर अगले दिन वापस आ जाए (जैसे दूसरा ग्रेड पढ़ लिया) तो वो दिन गड़बड़ मानकर छोड़ा।</small>';
@@ -15120,20 +15124,41 @@ function pvRender(){var el=document.getElementById('pvpanel');if(!el)return;var 
    h+='<div class="k" style="margin:6px 0">'+pvName(o)+'<div class="grid" style="grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">'+
     '<div><small>Zone</small><br>'+pvZone(o)+'</div><div><small>15 दिन</small><br>'+(f.ok?pvFw(f,'d15'):'—')+'</div><div><small>उतार-चढ़ाव</small><br>'+pvLvl(v)+'</div></div>'+
     (f.ok?'<div style="font-size:12px;margin-top:4px">30 दिन: '+pvFw(f,'d30').replace('<br>',' ')+'</div>':'<div style="font-size:12px;margin-top:4px;color:#a33">Probability: '+SR.esc(o.fwhy||'इतिहास कम')+'</div>')+
-    (v.ok?'<div style="font-size:12px">20 दिन औसत बदलाव '+fmt(v.avgAbs20)+'/दिन · SD 20द '+pvP(v.sd20).replace('+','')+'</div>':'')+
+    (v.ok?'<div style="font-size:12px">20 दिन औसत बदलाव '+fmt(v.avgAbs20)+'/दिन · SD 20द '+pvP(v.sd20).replace('+','')+' ≈ '+pvRs(pvSdRs(o))+(v.lvl?' · quote '+pvBand(v.pctl).quote+' · margin '+pvRs(v.avgAbs20)+'–'+pvRs(2*v.avgAbs20).replace('₹',''):'')+'</div>':'')+
     (o.sug?'<div class="sug '+(o.vol.lvl=='high'||o.type=='down'?'wait':o.type=='up'&&o.vol.lvl=='low'?'buy':'wait')+'" style="font-size:14px">💡 '+SR.esc(o.sug)+'</div>':'<div style="font-size:12px;color:#a33;margin-top:4px">सुझाव नहीं — इतिहास कम</div>')+'</div>';});
-  h+=disc+PV_FOOT_P+'<br>'+PV_FOOT_V;}
+  h+=disc+'<details open style="margin:8px 0"><summary>📖 इसे कैसे पढ़ें (छोटा)</summary><div style="font-size:13px;line-height:1.5">• <b>SD ≈ ₹</b>: ज़्यादातर दिनों में भाव लगभग इतने के अंदर बदलता है; इससे ज़्यादा = बड़ा झटका।<br>• <b>स्तर (x/100)</b>: 0–33 कम (शांत, quote 5–7 दिन) · 33–66 मध्यम (सामान्य) · 66–90 ज़्यादा (सावधानी, किस्तों में, quote 1–2 दिन) · 90–100 बहुत ज़्यादा (बड़ा stock नहीं, उसी दिन का quote)।<br>• <b>margin</b> = रोज़ के औसत बदलाव का 1–2 गुना — quote में इतना जोड़कर रखें।<br>• Volatility सिर्फ़ झटके का नाप है, दिशा नहीं — दिशा के लिए zone और 15/30 दिन वाला % देखें। पूरा हिसाब 🌊 Volatility tab में।</div></details>'+PV_FOOT_P+'<br>'+PV_FOOT_V;}
  else if(cur=='prob'){h+='<h3>🎲 Probability (संभावना) — 15 / 30 दिन</h3>'+hdr+'<div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>Zone</th><th>15 दिन</th><th>30 दिन</th></tr>';
   I.forEach(function(o){var f=o.fwd,hl='<br><small>इतिहास '+(o.hist||0)+' दिन'+(o.histFrom?' ('+dmy(o.histFrom)+' से)':'')+'</small>'+(o.net?'<br><small>🌐 internet इतिहास जुड़ा'+(o.net.low?' — कम भरोसा':'')+'</small>':'');
    if(!f.ok){h+='<tr><td>'+pvName(o)+hl+'</td><td>'+pvZone(o)+'</td><td colspan="2"><small style="color:#a33">इतिहास कम — '+SR.esc(o.fwhy||'')+'</small></td></tr>';return;}
    h+='<tr><td>'+pvName(o)+hl+'</td><td>'+pvZone(o)+'<br><small>मिलते-जुलते दिन '+f.n15+'</small></td><td>'+pvFw(f,'d15')+'</td><td>'+pvFw(f,'d30')+'</td></tr>';});
-  h+='</table></div>'+disc+PV_FOOT_P;}
+  h+='</table></div>'+disc+'<details open style="margin:8px 0"><summary>📖 n का मतलब</summary><div style="font-size:13px;line-height:1.5"><b>n</b> = पुराने इतिहास में कितने दिन ऐसे मिले जब ट्रेंड (zone) आज जैसा था। जितने ज़्यादा दिन, उतना पक्का प्रतिशत।<br>• <b>200+</b> = अच्छा भरोसा · <b>100–199</b> = ठीक भरोसा · <b>50–99</b> = थोड़ा कम भरोसा · <b>50 से कम</b> = कमज़ोर भरोसा (सिर्फ़ इशारा मानें)।<br>• 🌐 वाले माल में पुराना इतिहास internet से भरा है, इसलिए n बड़ा दिखे तब भी भरोसा कम मानें।</div></details>'+PV_FOOT_P;}
  else{h+='<h3>🌊 Volatility (उतार-चढ़ाव)</h3>'+hdr+'<div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>20 दिन औसत बदलाव</th><th>SD % 20द / 60द</th><th>30 दिन सबसे बड़ा झटका</th><th>स्तर</th></tr>';
   I.forEach(function(o){var v=o.vol;if(!v.ok){h+='<tr><td>'+pvName(o)+'</td><td colspan="4"><small style="color:#a33">'+SR.esc(v.why)+'</small></td></tr>';return;}
    var mx=v.max30?((v.max30.abs>0?'+':'−')+fmt(Math.abs(v.max30.abs))+'<br><small>'+dmy(v.max30.date)+'</small>'):'<small>30 दिन में भाव नहीं</small>';
    h+='<tr><td>'+pvName(o)+'<br><small>'+v.n+' भाव-दिन'+(v.skipped&&v.skipped.length?' · '+v.skipped.length+' गड़बड़ दिन छोड़े':'')+'</small>'+pvSpark(v.spark)+'</td><td><b>'+fmt(v.avgAbs20)+'</b>/दिन</td><td>'+pvP(v.sd20).replace('+','')+'<br><small>'+(v.sd60!=null?pvP(v.sd60).replace('+',''):'60द: इतिहास कम')+'</small></td><td>'+mx+'</td><td>'+pvLvl(v)+'</td></tr>';});
-  h+='</table></div><small>छोटा चार्ट: पिछले 30 भाव-दिनों का रोज़ का बदलाव (हरा = बढ़ा, लाल = घटा)।</small><br>'+PV_FOOT_V;}
+  h+='</table></div><small>छोटा चार्ट: पिछले 30 भाव-दिनों का रोज़ का बदलाव (हरा = बढ़ा, लाल = घटा)।</small>'+pvExplain(I)+PV_FOOT_V;}
  el.innerHTML=h;}
+function pvExplain(I){var L=I.filter(function(o){return o.vol&&o.vol.ok;}),h='<details open style="margin:8px 0"><summary>📖 Volatility कैसे पढ़ें और कैसे इस्तेमाल करें</summary><div style="font-size:13px;line-height:1.55">';
+ // 1 SD
+ h+='<p><b>1) SD % का मतलब</b> — SD % × आज का भाव = रोज़ का सामान्य उतार-चढ़ाव (₹)। ज़्यादातर दिनों में भाव लगभग इतने ₹ के अंदर बदलता है; इससे ज़्यादा बदले तो बड़ा झटका मानें।</p><div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>SD 20द</th><th>आज का भाव</th><th>≈ रोज़ का दायरा</th></tr>';
+ L.forEach(function(o){var r=pvSdRs(o);h+='<tr><td>'+SR.esc(o.name)+'</td><td>'+pvP(o.vol.sd20).replace('+','')+'</td><td>'+fmt(o.price)+'</td><td><b>± '+pvRs(r)+'</b></td></tr>';});
+ h+='</table></div>';
+ // 2 percentile scale
+ h+='<p><b>2) Percentile (x/100) का मतलब</b> — आज का उतार-चढ़ाव इसी माल के अपने पूरे इतिहास में कहाँ है। 79/100 = इतिहास के 79% दिनों से ज़्यादा झटके आज हैं।</p><div style="overflow:auto"><table class="fvt"><tr><th>स्केल</th><th>मतलब</th><th>क्या करें</th><th>Quote कितने दिन</th></tr>'+
+  '<tr><td><span class="v-und" style="padding:1px 6px;border-radius:4px">0–33 कम</span></td><td>शांत</td><td>बड़ा सौदा कम जोखिम</td><td>5–7 दिन</td></tr>'+
+  '<tr><td><span class="v-mid" style="padding:1px 6px;border-radius:4px">33–66 मध्यम</span></td><td>सामान्य (~49)</td><td>रोज़ की तरह काम</td><td>3–4 दिन</td></tr>'+
+  '<tr><td><span class="v-ovr" style="padding:1px 6px;border-radius:4px">66–90 ज़्यादा</span></td><td>सावधानी (~79)</td><td>किस्तों में ख़रीद</td><td>1–2 दिन</td></tr>'+
+  '<tr><td><span class="v-ovr" style="padding:1px 6px;border-radius:4px">90–100 बहुत ज़्यादा</span></td><td>ख़तरा (~99)</td><td>बड़ा stock नहीं, रोज़ भाव देखें</td><td>उसी दिन का</td></tr></table></div>';
+ // 3 practical use per item
+ h+='<p><b>3) इस tab से क्या काम लें</b> — stock कितना, quote कितने दिन, quote में कितना margin, किस्त या एक साथ, और नुकसान का अंदाज़ा (30 दिन का सबसे बड़ा एक-दिन झटका × टन)।</p><div style="overflow:auto"><table class="fvt"><tr><th>माल · स्तर</th><th>Stock / ख़रीद</th><th>Quote</th><th>Margin (रोज़ औसत ×1–2)</th><th>नुकसान का अंदाज़ा</th></tr>';
+ L.forEach(function(o){var v=o.vol,b=v.lvl?pvBand(v.pctl):null,mx=v.max30?Math.abs(v.max30.abs):null;
+  h+='<tr><td><b>'+SR.esc(o.name)+'</b><br><small>'+(b?b.hi+' ('+Math.round(v.pctl)+'/100)':'स्तर: इतिहास कम')+'</small></td><td>'+(b?b.stock+'<br><small>'+b.use+'</small>':'<small>—</small>')+'</td><td>'+(b?b.quote:'—')+'</td><td>'+pvRs(v.avgAbs20)+'–'+pvRs(2*v.avgAbs20).replace('₹','')+'/t</td><td>'+(mx!=null?pvRs(mx)+'/t<br><small>20 टन पर '+pvRs(mx*20)+'</small>':'—')+'</td></tr>';});
+ h+='</table></div>';
+ var lv=L.filter(function(o){return o.vol.lvl;}).sort(function(a,b){return a.vol.pctl-b.vol.pctl;});
+ if(lv.length){var q=lv[0],t=lv[lv.length-1];h+='<p>• <b>सबसे शांत:</b> '+SR.esc(q.name)+' ('+Math.round(q.vol.pctl)+'/100) — इसमें बड़ा सौदा/लंबा quote सबसे कम जोखिम।<br>• <b>सबसे ज़्यादा झटके:</b> '+SR.esc(t.name)+' ('+Math.round(t.vol.pctl)+'/100) — इसमें किस्तों में ख़रीद और छोटा quote।</p>';}
+ // 4 note
+ h+='<p class="alert"><b>4) ध्यान दें:</b> Volatility सिर्फ़ झटके का नाप है, <b>दिशा नहीं</b> — भाव बढ़ेगा या घटेगा, ये 🎲 Probability tab (zone और 15/30 दिन %) में देखें। Quote दिन और margin सिर्फ़ गणित से निकले सुझाव हैं, सलाह नहीं।</p>';
+ return h+'</div></details>';}
 // ===PV-UI-END===
 
 WAN=waMerge();
