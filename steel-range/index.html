@@ -20,6 +20,7 @@ details{margin:8px}.legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13
 .fvmode>.card:not(#fvpanel),.valmode>.card:not(#valpanel),.fvmode>details,.valmode>details,.fvmode>#samplebar,.valmode>#samplebar{display:none!important}.v-und{background:#d9f5df;color:#155d27}.v-fair{background:#e8eef8;color:#1f3b63}.v-ovr{background:#fde0e0;color:#8a1c1c}.v-mid{background:#fff4d1;color:#7a5a00}.vrec{padding:12px;border-radius:8px;margin:8px 0}.est{color:#b36b00;font-size:11px}.ok{color:#1d7a38;font-size:11px}.fvt td,.fvt th,.fvi td,.fvi th{font-size:13px;padding:4px}.fvi input{font-size:14px;padding:5px}
 .msmode>.card:not(#mspanel),.msmode>details,.msmode>#samplebar{display:none!important}#mspanel .fvt td small{line-height:1.3}
 .pvmode>.card:not(#pvpanel),.pvmode>details,.pvmode>#samplebar{display:none!important}#pvpanel .fvt td{vertical-align:top}#pvpanel .k b{display:inline;font-size:inherit}
+.samode>.card:not(#sapanel),.samode>details,.samode>#samplebar{display:none!important}#sapanel .fvt td{vertical-align:top}#sapanel summary{font-size:15px;padding:4px 0}
 header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .dl-off{background:#fff;color:#1f3b63;text-decoration:none;font-size:13px;font-weight:700;padding:8px 12px;border-radius:6px;white-space:nowrap}
 .dl-off:active,.dl-off:hover{background:#e8eef8}
@@ -31,6 +32,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;fle
 <div class="card" id="fvpanel" style="display:none"></div>
 <div class="card" id="valpanel" style="display:none"></div>
 <div class="card" id="pvpanel" style="display:none"></div>
+<div class="card" id="sapanel" style="display:none"></div>
 <div id="samplebar" class="card sample" style="display:none">⚠ इस commodity में SAMPLE (उदाहरण) data है — ये असली बाज़ार भाव नहीं हैं। <button class="r" onclick="clearSample()">Sample data हटाएँ</button></div>
 <div class="card" style="font-size:13px"><b>v5:</b> नया पहला tab "📋 मार्केट शीट" — बाज़ार + कच्चा माल रेट, लागत, सस्ता/सही/महँगा, Kamdhenu रेट सही खुला?, ट्रेंड, संभावना, सीज़न और आज की सलाह (Excel डाउनलोड)। <b>v4:</b> WhatsApp रेट फ़ाइल (wa-rates/rates.js) अपने-आप जुड़ती है (📲 निशान), नया tab "⚖ लागत बनाम बाज़ार" और "📊 मूल्यांकन" (सस्ता/सही/महँगा + ख़रीद सलाह)। <b>v3:</b> नीचे Dealer हिसाब (landed cost, stock planner, stock-कीमत असर), संकेत के कारण, बेहतर import preview; बड़ा उछाल अब हटता नहीं, जाँच के लिए दिखता है। <b>v2.1:</b> chart पर लिखे नंबर हटाकर हर chart के नीचे साफ़ सूची (रंग, नाम, ₹/टन) दी गई। <b>Version 2 (सुधरा हुआ):</b> ATR सही, edit में data नहीं खोता, WhatsApp DD/MM + preview, import/restore की जाँच, पहले से लिखे "परख" आँकड़े हटाए। <span class="disc" style="display:block">⚠ भाव का आधार एक जैसा रखें: वही brand, जगह, size, GST सहित/रहित, freight सहित/रहित, ₹/टन। अलग आधार मिलाने से range गलत आएगी।</span><div id="warn" class="alert" style="display:none"></div></div>
 <div class="card" id="dealer"><h3>🧮 Dealer हिसाब (v3) — सिर्फ़ गणित, कोई भविष्यवाणी नहीं, कोई अपने-आप ख़रीद नहीं</h3>
@@ -897,7 +899,7 @@ function signal(rows,opt){opt=opt||{};if(!rows||rows.length<80)return {ok:false,
  else{code='wait';verdict='इंतज़ार करें — सिर्फ़ ज़रूरत भर लें';}
  return {ok:true,date:d[i].date,price:price,trend:f.trend,f:f,score:sc,why:why,analog:an,enough:enough,verdict:verdict,code:code};}
 
-return {validDate:validDate,cleanRow:cleanRow,esc:esc,history:history,signal:signal,rsiArr:rsiArr,feats:feats,analog:analog,longRange:longRange,dwell:dwell,sma:sma,std:std,norm:norm,pivots:pivots,swings:swings,clusters:clusters,atr:atr,analyze:analyze,spread:spread,series:series,parseViron:parseViron,vironDaily:vironDaily,vironClean:vironClean,VIRON_MAP:VIRON_MAP};})();
+return {validDate:validDate,cleanRow:cleanRow,esc:esc,history:history,signal:signal,rsiArr:rsiArr,feats:feats,analog:analog,longRange:longRange,dwell:dwell,sma:sma,std:std,norm:norm,pivots:pivots,swings:swings,clusters:clusters,atr:atr,analyze:analyze,spread:spread,series:series,parseViron:parseViron,vironDaily:vironDaily,vironClean:vironClean,VIRON_MAP:VIRON_MAP,SIGW:SIGW};})();
 
 // ---- v3 dealer tools (pure functions; quantity/cost arithmetic only, no prediction) ----
 var DT=(function(){
@@ -929,9 +931,9 @@ function mergeBaseHist(id,userRows){var base=(typeof BASE_HIST!=="undefined"&&BA
 function rows(id){return mergeBaseHist(id,(DB.data[id]||[]).slice()).sort(function(a,b){return a.date<b.date?-1:1;});}
 function fmt(n){return n==null||isNaN(n)?'—':'₹'+Math.round(n).toLocaleString('en-IN');}
 function today(){var t=new Date();t.setMinutes(t.getMinutes()-t.getTimezoneOffset());return t.toISOString().slice(0,10);}
-function tabs(){document.getElementById('tabs').innerHTML='<button class="'+(cur=='ms'?'on':'')+'" onclick="cur=\'ms\';render();scrollTo(0,0)">📋 मार्केट शीट / Market Sheet</button>'+C.map(function(c){return '<button class="'+(c.id==cur?'on':'')+'" onclick="cur=\''+c.id+'\';resetForm();render()">'+c.n+'</button>';}).join('')+'<button class="'+(cur=='fv'?'on':'')+'" onclick="cur=\'fv\';render();scrollTo(0,0)">⚖ लागत बनाम बाज़ार</button><button class="'+(cur=='val'?'on':'')+'" onclick="cur=\'val\';render();scrollTo(0,0)">📊 मूल्यांकन</button>'+[['pv','🎯 Probability + Volatility'],['prob','🎲 Probability (संभावना)'],['vol','🌊 Volatility (उतार-चढ़ाव)']].map(function(t){return '<button class="'+(cur==t[0]?'on':'')+'" onclick="cur=\''+t[0]+'\';render();scrollTo(0,0)">'+t[1]+'</button>';}).join('');
+function tabs(){document.getElementById('tabs').innerHTML='<button class="'+(cur=='ms'?'on':'')+'" onclick="cur=\'ms\';render();scrollTo(0,0)">📋 मार्केट शीट / Market Sheet</button>'+C.map(function(c){return '<button class="'+(c.id==cur?'on':'')+'" onclick="cur=\''+c.id+'\';resetForm();render()">'+c.n+'</button>';}).join('')+'<button class="'+(cur=='fv'?'on':'')+'" onclick="cur=\'fv\';render();scrollTo(0,0)">⚖ लागत बनाम बाज़ार</button><button class="'+(cur=='val'?'on':'')+'" onclick="cur=\'val\';render();scrollTo(0,0)">📊 मूल्यांकन</button>'+[['pv','🎯 Probability + Volatility'],['prob','🎲 Probability (संभावना)'],['vol','🌊 Volatility (उतार-चढ़ाव)'],['sa','🧠 Smart Analytics']].map(function(t){return '<button class="'+(cur==t[0]?'on':'')+'" onclick="cur=\''+t[0]+'\';render();scrollTo(0,0)">'+t[1]+'</button>';}).join('');
  document.getElementById('zoom').innerHTML=[['1M',30],['3M',90],['6M',180],['1Y',365],['All',0]].map(function(z){return '<button class="'+(zoomD==z[1]?'on':'')+'" onclick="zoomD='+z[1]+';render()">'+z[0]+'</button>';}).join('');}
-function render(){tabs();if(pvMode())return;if(msMode())return;if(fvMode()||valMode())return;var r=rows(cur),a=SR.analyze(r),s=document.getElementById('status'),SG=SR.signal(r,sigOpt(cur)),SH=shortAdv(a,SG);
+function render(){tabs();if(saMode())return;if(pvMode())return;if(msMode())return;if(fvMode()||valMode())return;var r=rows(cur),a=SR.analyze(r),s=document.getElementById('status'),SG=SR.signal(r,sigOpt(cur)),SH=shortAdv(a,SG);
  document.getElementById('samplebar').style.display=r.some(function(x){return x.sample;})?'block':'none';
  var W=[];if(LOADWARN)W.push(LOADWARN);if(WAERR)W.push(WAERR);if(r.length&&!r.some(function(x){return !x.wa;}))W.push('इस browser/link में आपके हाथ से डाले भाव नहीं हैं, सिर्फ़ 📲 WhatsApp भाव हैं। पुरानी फ़ाइल वाले भाव लाने हों तो: पुरानी फ़ाइल खोलें → नीचे "Data / Backup" में "Backup (JSON)" दबाएँ → फिर यहाँ नीचे "📥 मेरा data जोड़ें" से वो फ़ाइल चुनें।');if(r.some(function(x){return x.wa;}))W.push('📲 = WhatsApp फ़ाइल से आया भाव ('+WAN+' दिन जुड़े; browser में save नहीं होता, फ़ाइल से हर बार आता है)');if(r.length){var age=Math.round((new Date(today())-new Date(r[r.length-1].date))/864e5);if(age>3)W.push('आखिरी भाव '+age+' दिन पुराना है — संकेत पुराने हो सकते हैं।');}
  if(r.length&&r.length<80)W.push('सिर्फ़ '+r.length+' entries — लंबे संकेत के लिए कम से कम 80 चाहिए।');
@@ -1657,6 +1659,197 @@ function pvExplain(I){var L=I.filter(function(o){return o.vol&&o.vol.ok;}),h='<d
  h+='<p class="alert"><b>4) ध्यान दें:</b> Volatility सिर्फ़ झटके का नाप है, <b>दिशा नहीं</b> — भाव बढ़ेगा या घटेगा, ये 🎲 Probability tab (zone और 15/30 दिन %) में देखें। Quote दिन और margin सिर्फ़ गणित से निकले सुझाव हैं, सलाह नहीं।</p>';
  return h+'</div></details>';}
 // ===PV-UI-END===
+
+// ===SA-UI-START=== v5 "🧠 Smart Analytics" tab — every number from real rows (BASE_HIST + DB + WhatsApp via valCollect); internet-filled/interpolated rows skipped; nothing invented.
+// Re-uses A/B cost (RL.fvCalc + dated inputs) and MSP.channel (₹2,500) read-only; never changes them. Inputs saved in localStorage 'steelRangeV5_sa'.
+var SAKEY='steelRangeV5_sa',SA=(function(){try{var x=JSON.parse(localStorage.getItem(SAKEY)||'{}');return (x&&typeof x=='object')?x:{};}catch(e){return {};}})(),SA_CACHE={};
+function saSave(){try{localStorage.setItem(SAKEY,JSON.stringify(SA));}catch(e){}}
+var SA_ITEMS=[['kamdhenu','Kamdhenu NXT (10–25 list)'],['billet_raipur','Raipur Billet'],['ingot_raipur','Raipur Ingot'],['pdri_raipur','Raipur Sponge PDRI'],['billet_mandi','Mandi Billet'],['hms_raipur','Raipur HMS 80:20']];
+function saMode(){var on=cur=='sa',p=document.getElementById('sapanel');document.body.classList.toggle('samode',on);if(p)p.style.display=on?'block':'none';
+ if(on){document.body.classList.remove('fvmode','valmode','msmode','pvmode');['fvpanel','valpanel','mspanel','pvpanel'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});saRender();}return on;}
+function saClean(L,d){var r=(L||[]).filter(function(x){return x&&x.date&&x.date<=d&&isFinite(+x.price)&&+x.price>0&&!x.interp&&!x.net;}).map(function(x){return {date:x.date,price:+x.price};}).sort(function(a,b){return a.date<b.date?-1:1;}),u=[];
+ r.forEach(function(x){if(u.length&&u[u.length-1].date===x.date)u[u.length-1]=x;else u.push(x);});return u;}
+function saDisp(id,p,date){return id=='kamdhenu'?RL.VAL.kamListAdd(date,p):p;}
+function saPctTxt(x,dp){return x==null||!isFinite(x)?'—':((x>0?'+':'')+x.toFixed(dp==null?2:dp)+'%');}
+function saMean(a){var s=0;for(var i=0;i<a.length;i++)s+=a[i];return a.length?s/a.length:null;}
+function saCorr(a,b){var n=a.length;if(n<3)return null;var ma=saMean(a),mb=saMean(b),sab=0,saa=0,sbb=0;for(var i=0;i<n;i++){sab+=(a[i]-ma)*(b[i]-mb);saa+=(a[i]-ma)*(a[i]-ma);sbb+=(b[i]-mb)*(b[i]-mb);}return (saa>0&&sbb>0)?sab/Math.sqrt(saa*sbb):null;}
+function saQ(a,q){var s=a.slice().sort(function(x,y){return x-y;});if(!s.length)return null;var p=(s.length-1)*q,lo=Math.floor(p),hi=Math.ceil(p);return s[lo]+(s[hi]-s[lo])*(p-lo);}
+function saJoin(A,B){var m={};B.forEach(function(r){m[r.date]=r.price;});return A.filter(function(r){return m[r.date]!=null;}).map(function(r){return {date:r.date,a:r.price,b:m[r.date]};});}
+function saLbl(cls,t){return '<span class="'+cls+'" style="padding:1px 6px;border-radius:4px;font-weight:bold">'+t+'</span>';}
+function saHelp(t){return '<div style="font-size:12px;color:#155d27;background:#eef8f0;border-radius:6px;padding:5px 7px;margin:4px 0">💡 <b>इसका मतलब / कैसे इस्तेमाल करें:</b> '+t+'</div>';}
+function saFew(t){return '<div style="font-size:12px;color:#a33">इतिहास कम — '+t+'</div>';}
+// ---- 1 lead-lag ----
+function saLeadLag(X,Y,maxLag){var J=saJoin(X,Y);if(J.length<80)return {ok:false,why:'दोनों के साझा दिन '+J.length+' (कम से कम 80 चाहिए)'};
+ var dx=[],dy=[];for(var i=1;i<J.length;i++){dx.push(J[i].a/J[i-1].a-1);dy.push(J[i].b/J[i-1].b-1);}
+ var res=[];for(var L=0;L<=maxLag;L++){var a=[],b=[];for(var t=0;t+L<dx.length;t++){a.push(dx[t]);b.push(dy[t+L]);}res.push({lag:L,r:saCorr(a,b),n:a.length});}
+ var best=res.reduce(function(p,c){return (c.r!=null&&(p==null||c.r>p.r))?c:p;},null),sig=2/Math.sqrt(best?best.n:1);
+ return {ok:true,res:res,best:best,sig:sig,n:J.length,from:J[0].date};}
+function saStrength(r,sig){if(r==null||r<sig||r<0.08)return ['कमज़ोर/नहीं','v-ovr'];if(r>=0.3)return ['मज़बूत','v-und'];if(r>=0.15)return ['मध्यम','v-mid'];return ['हल्का','v-mid'];}
+// ---- 2 mill margin (A/B cost re-used) ----
+function saMargins(V,d){var key='m|'+d+'|'+(V.billet_raipur||[]).length+'|'+(V.kamdhenu||[]).length+'|'+MSP.channel;if(SA_CACHE[key])return SA_CACHE[key];
+ INS=RL.inputSeries(WA&&WA.inputs||[],FV.manual,WAD);var bl=saClean(V.billet_raipur,d),pd=saClean(V.pdri_raipur,d),km=saClean(V.kamdhenu,d),cc={};
+ function cost(P,dt){var k=P+dt;if(!cc[k]){var c=RL.fvCalc(RL.inputsAt(INS,P,dt).v),x=c.inp,mix=Math.max(0,Math.min(100,x.scrapMix))/100;
+  cc[k]={spMet:x.spF*(1-mix),bOther:c.billet.scrap+c.billet.ferro,bConv:c.billet.power+c.billet.refr+c.billet.lab+c.billet.oh,blF:x.blF,tConv:c.tmt.total-c.tmt.billet};}return cc[k];}
+ var B=saJoin(bl,pd).map(function(r){var o={date:r.date,billet:r.a,pdri:r.b};['A','B'].forEach(function(P){var c=cost(P,r.date);o['raw'+P]=c.spMet*r.b+c.bOther;o['conv'+P]=c.bConv;o[P]=r.a-o['raw'+P]-o['conv'+P];});return o;});
+ var T=saJoin(km,bl).map(function(r){var list=RL.VAL.kamListAdd(r.date,r.a),real=list-MSP.channel,o={date:r.date,list:list,real:real,billet:r.b};['A','B'].forEach(function(P){var c=cost(P,r.date);o['raw'+P]=c.blF*r.b;o['conv'+P]=c.tConv;o[P]=real-o['raw'+P]-o['conv'+P];o[P+'adj']=o[P]-(list-r.a);});return o;});
+ return SA_CACHE[key]={B:B,T:T};}
+function saPctRank(arr,x){if(!arr.length)return null;var lo=0,eq=0;arr.forEach(function(v){if(v<x)lo++;else if(v===x)eq++;});return (lo+0.5*eq)/arr.length*100;}
+// ---- 7 regression ----
+function saSolve(A,b){var n=b.length,M=A.map(function(r,i){return r.concat([b[i]]);});for(var c=0;c<n;c++){var p=c;for(var r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;var t=M[c];M[c]=M[p];M[p]=t;if(Math.abs(M[c][c])<1e-12)return null;
+ for(r=0;r<n;r++){if(r==c)continue;var f=M[r][c]/M[c][c];for(var k=c;k<=n;k++)M[r][k]-=f*M[c][k];}}return M.map(function(r,i){return r[n]/r[i];});}
+function saOLS(X,y){var k=X[0].length,A=[],b=[];for(var i=0;i<k;i++){A.push(new Array(k).fill(0));b.push(0);}
+ for(var t=0;t<X.length;t++)for(i=0;i<k;i++){b[i]+=X[t][i]*y[t];for(var j=0;j<k;j++)A[i][j]+=X[t][i]*X[t][j];}return saSolve(A,b);}
+function saReg(T,F1,F2,h){var key='r|'+T.id+'|'+h+'|'+T.r.length+'|'+F1.r.length+'|'+F2.r.length;if(SA_CACHE[key])return SA_CACHE[key];
+ var m1={},m2={};F1.r.forEach(function(r){m1[r.date]=r.price;});F2.r.forEach(function(r){m2[r.date]=r.price;});
+ var J=T.r.filter(function(r){return m1[r.date]!=null&&m2[r.date]!=null;}).map(function(r){return {date:r.date,y:r.price,a:m1[r.date],b:m2[r.date]};});
+ if(J.length<120)return SA_CACHE[key]={ok:false,why:'तीनों के साझा दिन '+J.length+' (कम से कम 120 चाहिए)'};
+ var S=[];for(var i=7;i<J.length;i++){var x=[1,(J[i].a/J[i-3].a-1)*100,(J[i].b/J[i-3].b-1)*100,(J[i].y/J[i-7].y-1)*100],tgt=i+h<J.length?(J[i+h].y/J[i].y-1)*100:null;S.push({i:i,date:J[i].date,x:x,y:tgt,p:J[i].y});}
+ var tr=S.filter(function(s){return s.y!=null;}),X=tr.map(function(s){return s.x;}),Y=tr.map(function(s){return s.y;}),beta=saOLS(X,Y);if(!beta)return SA_CACHE[key]={ok:false,why:'गणना नहीं हो सकी'};
+ var my=saMean(Y),ssr=0,sst=0,res=[];tr.forEach(function(s,k){var f=0;for(var j=0;j<4;j++)f+=beta[j]*s.x[j];ssr+=(s.y-f)*(s.y-f);sst+=(s.y-my)*(s.y-my);res.push(s.y-f);});
+ var r2=sst>0?1-ssr/sst:null,sd=Math.sqrt(ssr/Math.max(1,tr.length-4));
+ // walk-forward: train only on samples whose outcome is known before day t (refit every 5 samples)
+ var st=Math.floor(tr.length*0.6),hit=0,tot=0,up=0,bw=null;for(var t=st;t<tr.length;t++){if(!bw||(t-st)%5===0){var tt=tr.slice(0,Math.max(10,t-h));bw=saOLS(tt.map(function(s){return s.x;}),tt.map(function(s){return s.y;}));}if(!bw)continue;
+  var f=0;for(j=0;j<4;j++)f+=bw[j]*tr[t].x[j];if(tr[t].y===0||f===0)continue;tot++;if((f>0)===(tr[t].y>0))hit++;if(tr[t].y>0)up++;}
+ var last=S[S.length-1],pred=0;for(j=0;j<4;j++)pred+=beta[j]*last.x[j];
+ return SA_CACHE[key]={ok:true,beta:beta,r2:r2,sd:sd,n:tr.length,hit:tot?hit/tot*100:null,tot:tot,base:tot?Math.max(up,tot-up)/tot*100:null,pred:pred,last:last,from:J[0].date};}
+// ---- 8 backtest of बाज़ार का इशारा ----
+function saBack(id,r){var key='b|'+id+'|'+r.length+'|'+(r.length?r[r.length-1].date:'');if(SA_CACHE[key])return SA_CACHE[key];
+ if(r.length<120)return SA_CACHE[key]={ok:false,why:r.length+' दिन (कम से कम 120 चाहिए)'};
+ var full=sigOpt(id)||{},sp=full.spread||null,out=[],start=Math.max(80,r.length-520);
+ for(var i=start;i<r.length;i++){var d=r[i].date,o={spreadDir:full.spreadDir,spreadName:full.spreadName};if(sp)o.spread=sp.filter(function(x){return x.date<=d;});
+  var s;try{s=SR.signal(r.slice(0,i+1),o);}catch(e){s=null;}if(!s||!s.ok)continue;
+  out.push({i:i,score:s.score,why:s.why,c5:i+5<r.length?(r[i+5].price/r[i].price-1)*100:null,c15:i+15<r.length?(r[i+15].price/r[i].price-1)*100:null});}
+ function grp(f,k){var L=out.filter(function(o){return f(o.score)&&o[k]!=null;}),u=L.filter(function(o){return o[k]>0;}).length,dn=L.filter(function(o){return o[k]<0;}).length;return {n:L.length,up:L.length?u/L.length*100:null,dn:L.length?dn/L.length*100:null,avg:L.length?saMean(L.map(function(o){return o[k];})):null};}
+ var R={ok:true,n:out.length,from:r[start].date,hi5:grp(function(s){return s>=65;},'c5'),hi15:grp(function(s){return s>=65;},'c15'),lo5:grp(function(s){return s<=35;},'c5'),lo15:grp(function(s){return s<=35;},'c15'),mid15:grp(function(s){return s>35&&s<65;},'c15'),all15:grp(function(){return true;},'c15'),comp:[]};
+ var keys=['trend','pos3','pos6','sup','rsi','dwell','spread'],NM={trend:'Trend',pos3:'3 महीने range',pos6:'6 महीने range',sup:'लंबी Support',rsi:'RSI',dwell:'Range टिकाव',spread:'Spread'};
+ keys.forEach(function(k){var ok=0,tot=0;out.forEach(function(o){if(o.c15==null||o.c15===0)return;var w=(o.why||[]).filter(function(x){return x.key===k;})[0];if(!w||!w.raw)return;tot++;if((w.raw>0)===(o.c15>0))ok++;});
+  var acc=tot?ok/tot*100:null,SW=(SR.SIGW||{}),cw=SW[k]==null?1:SW[k],sug=acc==null||tot<30?null:Math.max(0,Math.min(2,Math.round(Math.max(0,acc-50)/10*2)/2));R.comp.push({k:k,name:NM[k],acc:acc,n:tot,cur:cw,sug:sug});});
+ return SA_CACHE[key]=R;}
+// ---- render ----
+function saInp(k,v,w){return '<input data-sa="'+k+'" type="number" value="'+(v==null?'':v)+'" style="width:'+(w||80)+'px">';}
+function saGet(path,def){var o=SA,p=path.split('.');for(var i=0;i<p.length;i++){if(o==null)return def;o=o[p[i]];}return o==null||o===''?def:o;}
+function saSet(path,v){var o=SA,p=path.split('.');for(var i=0;i<p.length-1;i++){if(!o[p[i]]||typeof o[p[i]]!='object')o[p[i]]={};o=o[p[i]];}o[p[p.length-1]]=v;saSave();}
+function saRender(){var el=document.getElementById('sapanel');if(!el)return;var h;try{h=saBuild();}catch(e){h='<div class="alert">गलती: '+SR.esc(String(e&&e.message||e))+'</div>';}el.innerHTML=h;
+ [].forEach.call(el.querySelectorAll('[data-sa]'),function(i){i.onchange=function(){var v=this.type=='number'?(this.value===''?'':+this.value):this.value;saSet(this.getAttribute('data-sa'),v);saRender();};});}
+function saBuild(){var d=typeof pvAsof=='function'?pvAsof():fvAsof(),V=valCollect(d),I={};SA_ITEMS.forEach(function(t){I[t[0]]={id:t[0],name:t[1],r:saClean(V[t[0]],d)};});
+ var h='<h3>🧠 Smart Analytics</h3><div style="font-size:12px;color:#555">आखिरी भाव तारीख '+dmy(d)+' · सिर्फ़ असली भाव (BASE इतिहास + WhatsApp)। हर हिस्सा गणित से निकला संकेत/अनुमान है, पक्की सलाह नहीं।</div>';
+ function sec(t,body,open){return '<details'+(open||window.SA_OPEN_ALL?' open':'')+' style="margin:8px 0;border-top:1px solid #ddd;padding-top:6px"><summary>'+t+'</summary>'+body+'</details>';}
+ function px(it){var r=it.r;return r.length?saDisp(it.id,r[r.length-1].price,r[r.length-1].date):null;}
+ function pdate(it){return it.r.length?it.r[it.r.length-1].date:null;}
+ // ---- alerts banner first ----
+ var AL=(SA.alerts||[]).filter(function(a){return a&&I[a.id]&&isFinite(+a.price);}),hitH='';
+ AL.forEach(function(a){var p=px(I[a.id]);if(p==null)return;var hit=a.op=='ge'?p>=+a.price:p<=+a.price;if(hit)hitH+='<div class="alert" style="background:#ffd6d6"><b>🔔 '+SR.esc(I[a.id].name)+'</b> आज '+fmt(p)+' — आपका लेवल '+(a.op=='ge'?'≥ ':'≤ ')+fmt(+a.price)+' छू गया ('+dmy(pdate(I[a.id]))+')</div>';});
+ h+=hitH;
+ // ---- A spread ----
+ var kb=saJoin(I.kamdhenu.r,I.billet_raipur.r).map(function(r){return {date:r.date,v:r.a-r.b,lv:RL.VAL.kamListAdd(r.date,r.a)-r.b};}),b='';
+ if(kb.length<60)b=saFew('Kamdhenu और Raipur billet के साझा दिन '+kb.length+' (कम से कम 60)');else{var cut=addDays(kb[kb.length-1].date,-365),w1=kb.filter(function(x){return x.date>=cut;}).map(function(x){return x.v;}),tv=kb[kb.length-1].v,pr=saPctRank(w1,tv),av=saMean(w1);
+  b='<div class="k">आज ('+dmy(kb[kb.length-1].date)+'): Kamdhenu basic (list − ₹6,000) − Raipur billet = <b>'+fmt(tv)+'</b> <small>(list − billet = '+fmt(kb[kb.length-1].lv)+')</small><br>पिछले 1 साल का औसत '+fmt(av)+' · दायरा '+fmt(Math.min.apply(null,w1))+'–'+fmt(Math.max.apply(null,w1)).replace('₹','')+' · <b>percentile '+Math.round(pr)+'</b> ('+w1.length+' दिन)</div>'+
+  '<div class="sug '+(pr>80?'wait':pr<20?'buy':'')+'" style="font-size:14px">'+(pr>80?'Spread असामान्य रूप से ऊँचा — Kamdhenu नरम हो सकता है (billet के मुक़ाबले महँगा)।':pr<20?'Spread बहुत कम — Kamdhenu billet के मुक़ाबले सस्ता; आगे Kamdhenu मज़बूत हो सकता है।':'Spread सामान्य दायरे में।')+'</div>';}
+ h+=sec('🅰 Kamdhenu − Raipur Billet spread',b+'<div style="font-size:11px;color:#666">23-Sep से Kamdhenu list में ₹6,000 का basis बदलाव है, इसलिए पुराने दिनों से तुलना basic (= list − ₹6,000; उससे पहले list) पर।</div>'+saHelp('Kamdhenu और billet का फ़र्क = mill की रोलिंग कमाई। फ़र्क बहुत ऊँचा (80+ percentile) हो तो आमतौर पर Kamdhenu घटता है या billet बढ़ता है; बहुत नीचा हो तो उल्टा। ख़रीद का समय तय करने में मदद।'),true);
+ // ---- B/C support-resistance + MA ----
+ b='<div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>आज</th><th>Support (90द)</th><th>Resistance (90द)</th><th>MA20 / MA50</th></tr>';
+ SA_ITEMS.forEach(function(t){var it=I[t[0]],r=it.r;if(r.length<50){b+='<tr><td>'+SR.esc(it.name)+'</td><td colspan="4"><small>इतिहास कम ('+r.length+' दिन, 50 चाहिए)</small></td></tr>';return;}
+  var ld=r[r.length-1].date,add=saDisp(it.id,0,ld),p=r[r.length-1].price,lr90=SR.longRange(r,90),lr30=SR.longRange(r,30),c=r.map(function(x){return x.price;}),m20=saMean(c.slice(-20)),m50=saMean(c.slice(-50));
+  function lv(L,below){if(!L||!L.clusters)return [];return L.clusters.filter(function(x){return x.n>=2&&(below?x.p<=p:x.p>p);}).sort(function(a,b2){return below?b2.p-a.p:a.p-b2.p;}).slice(0,2);}
+  var su=lv(lr90,true),re=lv(lr90,false);
+  function f2(L,fb){return L.length?L.map(function(x){return fmt(x.p+add)+' <small>('+x.n+' बार)</small>';}).join('<br>'):(fb?'<small>'+fmt(fb.p+add)+' (90द low/high)</small>':'—');}
+  b+='<tr><td><b>'+SR.esc(it.name)+'</b><br><small>30द: '+(lr30?fmt(lr30.low+add)+'–'+fmt(lr30.high+add).replace('₹',''):'—')+'</small></td><td>'+fmt(p+add)+'</td><td>'+f2(su,lr90&&lr90.sup)+'</td><td>'+f2(re,lr90&&lr90.res)+'</td><td>'+fmt(m20+add)+' <small>('+saPctTxt((p/m20-1)*100,1)+')</small><br>'+fmt(m50+add)+' <small>('+saPctTxt((p/m50-1)*100,1)+')</small></td></tr>';});
+ h+=sec('🅱 Support / Resistance + 🅲 MA20 / MA50',b+'</table></div>'+saHelp('Support = पिछले 90 दिन में जहाँ भाव बार-बार रुककर पलटा (नीचे), Resistance = जहाँ बार-बार रुककर गिरा (ऊपर); "(3 बार)" = कितनी बार। भाव MA20 और MA50 दोनों से नीचे = कमज़ोरी, दोनों से ऊपर = मज़बूती। Support के पास ख़रीद, resistance के पास रुकना ठीक रहता है।'),true);
+ // ---- 1 lead-lag ----
+ var pairs=[['pdri_raipur','kamdhenu','Sponge PDRI','Kamdhenu'],['billet_raipur','kamdhenu','Raipur billet','Kamdhenu'],['billet_mandi','kamdhenu','Mandi billet','Kamdhenu'],['pdri_raipur','billet_raipur','Sponge PDRI','Raipur billet']];
+ var tm=saClean(typeof rows=='function'?rows('tmt'):[],d);if(tm.length>=80)pairs.push(['billet_raipur','tmt','Raipur billet','TMT']);
+ b='<div style="overflow:auto"><table class="fvt"><tr><th>कौन आगे → कौन पीछे</th><th>lag 0–7 दिन (r)</th><th>सबसे अच्छा</th></tr>';
+ pairs.forEach(function(pq){var X=I[pq[0]].r,Y=pq[1]=='tmt'?tm:I[pq[1]].r,L=saLeadLag(X,Y,7);
+  if(!L.ok){b+='<tr><td>'+pq[2]+' → '+pq[3]+'</td><td colspan="2"><small>इतिहास कम — '+L.why+'</small></td></tr>';return;}
+  var st=saStrength(L.best.r,L.sig),vt=L.best.r<L.sig||L.best.r<0.08?'कोई साफ़ आगे-पीछे का रिश्ता नहीं मिला':(L.best.lag===0?pq[2]+' और '+pq[3]+' उसी दिन साथ चलते हैं':pq[2]+' बदलने के ~'+L.best.lag+' भाव-दिन बाद '+pq[3]+' चलता है');
+  b+='<tr><td><b>'+pq[2]+' → '+pq[3]+'</b><br><small>'+L.n+' साझा दिन ('+dmy(L.from)+' से)</small></td><td><small>'+L.res.map(function(x){return x.lag+':'+(x.r==null?'—':x.r.toFixed(2));}).join(' ')+'</small></td><td>lag '+L.best.lag+' · r '+L.best.r.toFixed(2)+'<br>'+saLbl(st[1],'भरोसा '+st[0])+'<br><small>'+vt+'</small></td></tr>';});
+ h+=sec('1️⃣ कच्चा माल → तैयार माल: कितने दिन बाद असर (Lead-Lag)',b+'</table></div>'+saHelp('r = रोज़ के बदलाव का मेल (−1 से +1)। lag 2 पर सबसे ज़्यादा r = कच्चा माल बदलने के 2 भाव-दिन बाद तैयार माल चलता है। r 0.15 से कम = रिश्ता कमज़ोर; 2/√n से कम = संयोग हो सकता है। Sponge/billet में तेज़ी दिखे तो उतने दिन पहले Kamdhenu का ऑर्डर देना फ़ायदेमंद हो सकता है।'));
+ // ---- 2 margin ----
+ var M=saMargins(V,d);b='';
+ function mrow(name,L,priceTxt){if(L.length<30)return '<tr><td>'+name+'</td><td colspan="3"><small>इतिहास कम ('+L.length+' दिन)</small></td></tr>';var z=L[L.length-1],cut2=addDays(z.date,-730),Hs=L.filter(function(x){return x.date>=cut2;}),ka=z.Aadj!=null?'Aadj':'A',kb2=z.Badj!=null?'Badj':'B',pa=saPctRank(Hs.map(function(x){return x[ka];}),z[ka]),pb=saPctRank(Hs.map(function(x){return x[kb2];}),z[kb2]);
+  var v=pa<20?['मार्जिन बहुत कम — भाव का फ़र्श पास, और गिरावट की गुंजाइश कम','buy']:pa>80?['मार्जिन बहुत ज़्यादा — भाव गिरने की गुंजाइश','wait']:['मार्जिन सामान्य',''];
+  return '<tr><td><b>'+name+'</b><br><small>'+priceTxt(z)+' ('+dmy(z.date)+')</small></td><td>A: <b>'+fmt(z.A)+'</b><br><small>कच्चा '+fmt(z.rawA)+' + conversion '+fmt(z.convA)+'</small></td><td>B: <b>'+fmt(z.B)+'</b><br><small>कच्चा '+fmt(z.rawB)+' + conversion '+fmt(z.convB)+'</small></td><td>A pctl <b>'+Math.round(pa)+'</b> · B '+Math.round(pb)+'<br><small>'+Hs.length+' दिन'+(z.Aadj!=null?'; basic आधार पर A '+fmt(z.Aadj)+', B '+fmt(z.Badj):'')+'</small><div class="sug '+v[1]+'" style="font-size:12px;padding:4px">'+v[0]+'</div></td></tr>';}
+ b='<div style="overflow:auto"><table class="fvt"><tr><th>स्टेज</th><th>A (छोटा plant)</th><th>B (बड़ा plant)</th><th>इतिहास में</th></tr>'+
+  mrow('Billet मार्जिन',M.B,function(z){return 'billet '+fmt(z.billet)+' · PDRI '+fmt(z.pdri);})+mrow('TMT मार्जिन (Kamdhenu)',M.T,function(z){return 'list '+fmt(z.list)+' − channel '+fmt(MSP.channel)+' · billet '+fmt(z.billet);})+'</table></div><div style="font-size:11px;color:#666">TMT मार्जिन का percentile 23-Sep वाले ₹6,000 basis बदलाव को हटाकर (basic आधार पर) निकाला, ताकि पुराने दिनों से सही तुलना हो।</div>';
+ h+=sec('2️⃣ Mill का मार्जिन (बाज़ार भाव − कच्चा माल − conversion)',b+saHelp('Billet: Raipur billet − (sponge खपत × PDRI बाज़ार भाव + scrap + ferro) − conversion (बिजली, refractory, लेबर, overhead)। TMT: (Kamdhenu list − ₹'+Math.round(MSP.channel).toLocaleString('en-IN')+' channel) − (billet खपत × Raipur billet) − rolling खर्च। A/B लागत ⚖ tab के inputs से (जिस तारीख का input नहीं, वहाँ default)। मार्जिन बहुत कम = mill घाटे के पास, भाव और गिरना मुश्किल; बहुत ज़्यादा = गिरने की जगह।'));
+ // ---- 3 day-of-week ----
+ var WD=['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'];b='<div style="overflow:auto"><table class="fvt"><tr><th>माल</th>'+[1,2,3,4,5,6].map(function(k){return '<th>'+WD[k]+'</th>';}).join('')+'</tr>';
+ ['kamdhenu','billet_raipur','pdri_raipur','billet_mandi'].forEach(function(id){var r=I[id].r,cut3=r.length?addDays(r[r.length-1].date,-730):'',ch={},cnt={},wk={},cheap={},nw=0;
+  for(var i=1;i<r.length;i++){if(r[i].date<cut3)continue;var g=new Date(r[i].date+'T00:00:00Z').getUTCDay();(ch[g]=ch[g]||[]).push((r[i].price/r[i-1].price-1)*100);}
+  r.filter(function(x){return x.date>=cut3;}).forEach(function(x){var dt=new Date(x.date+'T00:00:00Z'),g=dt.getUTCDay(),mon=addDays(x.date,-((g+6)%7));(wk[mon]=wk[mon]||[]).push({g:g,p:x.price});});
+  Object.keys(wk).forEach(function(k){var L=wk[k];if(L.length<4)return;var mn=Math.min.apply(null,L.map(function(x){return x.p;})),mx=Math.max.apply(null,L.map(function(x){return x.p;}));if(mn===mx)return;nw++;L.forEach(function(x){if(x.p===mn)cheap[x.g]=(cheap[x.g]||0)+1;});});
+  var best=null;[1,2,3,4,5,6].forEach(function(k){if(cheap[k]&&(best==null||cheap[k]>cheap[best]))best=k;});
+  b+='<tr><td><b>'+SR.esc(I[id].name)+'</b><br><small>'+nw+' हफ़्ते (भाव बदले)</small></td>'+[1,2,3,4,5,6].map(function(k){var a=ch[k]||[];return '<td'+(k===best?' style="background:#d9f5df"':'')+'>'+(a.length?saPctTxt(saMean(a),2)+'<br><small>n='+a.length+'</small><br><small>सस्ता '+(nw?Math.round((cheap[k]||0)/nw*100):0)+'%</small>':'—')+'</td>';}).join('')+'</tr>';});
+ h+=sec('3️⃣ हफ़्ते का कौन-सा दिन सस्ता (Day-of-week, पिछले 2 साल)',b+'</table></div>'+saHelp('ऊपर = उस दिन भाव का औसत बदलाव (पिछले भाव-दिन से)। "सस्ता x%" = जिन हफ़्तों में भाव बदला, उनमें कितनी बार ये दिन हफ़्ते का सबसे सस्ता था (बराबरी में दोनों गिने)। हरा = सबसे ज़्यादा बार सस्ता। फ़र्क छोटे हों (0.05% से कम) तो दिन का असर नहीं मानें।'));
+ // ---- 4 seasonal ----
+ var MN=['जन','फ़र','मार्च','अप्रै','मई','जून','जुला','अग','सित','अक्टू','नव','दिस'];b='<div style="overflow:auto"><table class="fvt"><tr><th>माल</th>'+MN.map(function(m){return '<th>'+m+'</th>';}).join('')+'<th>मानसून<br>जून–सित</th><th>त्योहार<br>अक्टू–नव</th></tr>';
+ ['kamdhenu','billet_raipur','pdri_raipur','billet_mandi'].forEach(function(id){var r=I[id].r.filter(function(x){return x.date>='2023-01-01';}),by={};r.forEach(function(x){var y=x.date.slice(0,4),m=+x.date.slice(5,7)-1;by[y]=by[y]||{};(by[y][m]=by[y][m]||[]).push(x.price);});
+  var idx={},yrs=[];Object.keys(by).forEach(function(y){var ms=Object.keys(by[y]);if(ms.length<6)return;yrs.push(y);var mav={};ms.forEach(function(m){mav[m]=saMean(by[y][m]);});var ya=saMean(ms.map(function(m){return mav[m];}));ms.forEach(function(m){(idx[m]=idx[m]||[]).push((mav[m]/ya-1)*100);});});
+  if(!yrs.length){b+='<tr><td>'+SR.esc(I[id].name)+'</td><td colspan="14"><small>इतिहास कम (6+ महीने वाला कोई साल नहीं)</small></td></tr>';return;}
+  function avgM(L){var v=[];L.forEach(function(m){if(idx[m])v=v.concat(idx[m]);});return v.length?saMean(v):null;}
+  b+='<tr><td><b>'+SR.esc(I[id].name)+'</b><br><small>साल: '+yrs.join(', ')+'</small></td>'+MN.map(function(m,k){var a=idx[k]||[];return '<td style="color:'+(a.length&&saMean(a)<0?'#8a1c1c':'#155d27')+'">'+(a.length?saPctTxt(saMean(a),1)+'<br><small>'+a.length+'स</small>':'—')+'</td>';}).join('')+'<td><b>'+saPctTxt(avgM([5,6,7,8]),1)+'</b></td><td><b>'+saPctTxt(avgM([9,10]),1)+'</b></td></tr>';});
+ h+=sec('4️⃣ महीने / मानसून / त्योहार का असर (2023 से)',b+'</table></div>'+saHelp('हर महीने का औसत भाव उसी साल के औसत से कितना % ऊपर/नीचे; फिर सालों का औसत। "2स" = कितने साल का डेटा। ⚠ सिर्फ़ 2–3 साल का डेटा है — ये पक्का पैटर्न नहीं, सिर्फ़ झुकाव। जिस महीने का % लगातार नीचे, उसमें ख़रीद की योजना बनाएँ।'));
+ // ---- 5 VaR + 6 percentile ----
+ var tons=+saGet('var_tons',20)||20;b='<div class="row">Stock (टन): '+saInp('var_tons',tons,70)+'</div><div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>आज</th><th>5 भाव-दिन 95% VaR</th><th>7 भाव-दिन 95% VaR</th><th>'+tons+' टन पर (5द / 7द)</th></tr>';
+ var pc='<div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>आज</th><th>6 महीने</th><th>1 साल</th></tr>';
+ SA_ITEMS.forEach(function(t){var it=I[t[0]],r=it.r;if(r.length<60){b+='<tr><td>'+SR.esc(it.name)+'</td><td colspan="4"><small>इतिहास कम ('+r.length+' दिन, 60 चाहिए)</small></td></tr>';pc+='<tr><td>'+SR.esc(it.name)+'</td><td colspan="3"><small>इतिहास कम</small></td></tr>';return;}
+  var P=px(it),rr=r.slice(-505);function v(hh){var a=[];for(var i=0;i+hh<rr.length;i++)a.push(rr[i+hh].price/rr[i].price-1);return {q:saQ(a,0.05),n:a.length};}var v5=v(5),v7=v(7);
+  function loss(q){return q<0?-q*P:0;}
+  b+='<tr><td><b>'+SR.esc(it.name)+'</b><br><small>'+(rr.length)+' दिन</small></td><td>'+fmt(P)+'</td><td>'+fmt(loss(v5.q))+'/t<br><small>'+saPctTxt(v5.q*100,1)+'</small></td><td>'+fmt(loss(v7.q))+'/t<br><small>'+saPctTxt(v7.q*100,1)+'</small></td><td><b>'+fmt(loss(v5.q)*tons)+'</b> / <b>'+fmt(loss(v7.q)*tons).replace('₹','₹')+'</b></td></tr>';
+  var ld=r[r.length-1].date,tp=r[r.length-1].price;function rk(days){var c=addDays(ld,-days),w=r.filter(function(x){return x.date>=c;});var dear=w.filter(function(x){return x.price>tp;}).length;return {pct:w.length?dear/w.length*100:null,n:w.length};}var a6=rk(182),a1=rk(365);
+  function tx(a){return a.pct==null?'—':'<b>'+Math.round(a.pct)+'%</b> दिनों से सस्ता<br><small>'+a.n+' दिन</small>';}
+  pc+='<tr><td><b>'+SR.esc(it.name)+'</b></td><td>'+fmt(P)+'</td><td>'+tx(a6)+'</td><td>'+tx(a1)+'</td></tr>';});
+ h+=sec('5️⃣ जोखिम: अगले 5/7 दिन में stock की कीमत कितनी गिर सकती है (VaR 95%)',b+'</table></div>'+saHelp('पिछले ~2 साल के असली भाव में 5 (या 7) भाव-दिन के बदलाव देखे; 100 में से 95 बार गिरावट इससे कम रही। मतलब 20 बार में 1 बार इससे ज़्यादा नुकसान भी हो सकता है। ज़्यादा VaR वाले माल का stock कम रखें या जल्दी बेचें।'),true);
+ h+=sec('6️⃣ आज का भाव इतिहास में कहाँ (Percentile rank)',pc+'</table></div>'+saHelp('"85% दिनों से सस्ता" = पिछले 1 साल के 85% दिनों में भाव आज से ऊँचा था — यानी आज का भाव सस्ते हिस्से में है। 20% से कम = आज महँगा हिस्सा।'),true);
+ // ---- 7 regression ----
+ b='';[['kamdhenu','billet_raipur','pdri_raipur','Raipur billet','Sponge PDRI','Kamdhenu'],['billet_raipur','pdri_raipur','billet_mandi','Sponge PDRI','Mandi billet','Raipur billet']].forEach(function(q){
+  [2,3].forEach(function(hh){var R=saReg(I[q[0]],I[q[1]],I[q[2]],hh),it=I[q[0]];if(!R.ok){b+='<div class="k" style="margin:4px 0"><b>'+q[5]+' (अगले '+hh+' दिन)</b>: '+saFew(R.why)+'</div>';return;}
+   var P=px(it),lo=(R.pred-R.sd)/100*P,hi=(R.pred+R.sd)/100*P;
+   b+='<div class="k" style="margin:4px 0"><b>'+q[5]+' — अगले '+hh+' भाव-दिन का अनुमान: '+saPctTxt(R.pred,2)+'</b> ('+fmt(P+R.pred/100*P)+'; दायरा '+fmt(P+lo)+'–'+fmt(P+hi).replace('₹','')+')<br><small>फ़ॉर्मूला: '+q[3]+' 3 दिन में 1% बढ़े → '+saPctTxt(R.beta[1],2)+'; '+q[4]+' 3 दिन में 1% → '+saPctTxt(R.beta[2],2)+'; खुद का 7 दिन ट्रेंड 1% → '+saPctTxt(R.beta[3],2)+'; बाकी स्थिर '+saPctTxt(R.beta[0],2)+'।<br>R² '+R.r2.toFixed(2)+' ('+R.n+' दिन, '+dmy(R.from)+' से) · walk-forward सही दिशा <b>'+(R.hit==null?'—':Math.round(R.hit)+'%')+'</b> (n='+R.tot+'; हमेशा एक ही दिशा कहने से '+(R.base==null?'—':Math.round(R.base)+'%')+')</small></div>';});});
+ h+=sec('7️⃣ अगले 2–3 दिन का अनुमान (Multiple Regression)',b+'<div class="disc">⚠ ये अनुमान है, सलाह नहीं।</div>'+saHelp('R² = भाव के बदलाव का कितना हिस्सा फ़ॉर्मूला समझा पाया (0.10 = 10%)। "सही दिशा" = पुराने दिनों पर, सिर्फ़ उससे पहले के डेटा से बनाकर, कितनी बार ऊपर/नीचे सही बताया। ये "एक ही दिशा" वाले % से ज़्यादा न हो तो फ़ॉर्मूला पर भरोसा न करें।'));
+ // ---- 8 backtest ----
+ b='';['kamdhenu','billet_raipur'].forEach(function(id){var R=saBack(id,I[id].r);if(!R.ok){b+='<div class="k">'+SR.esc(I[id].name)+': '+saFew(R.why)+'</div>';return;}
+  function g(x,k){return x.n?(Math.round(x[k])+'% (n='+x.n+', औसत '+saPctTxt(x.avg,2)+')'):'n=0';}
+  b+='<div class="k" style="margin:4px 0"><b>'+SR.esc(I[id].name)+'</b> <small>('+R.n+' दिन, '+dmy(R.from)+' से)</small><br>Score ≥65 के बाद भाव बढ़ा: 5 दिन '+g(R.hi5,'up')+' · 15 दिन '+g(R.hi15,'up')+'<br>Score ≤35 के बाद भाव घटा: 5 दिन '+g(R.lo5,'dn')+' · 15 दिन '+g(R.lo15,'dn')+'<br><small>तुलना: सभी दिनों में 15 दिन बाद बढ़ा '+g(R.all15,'up')+'</small>'+
+   '<table class="fvt" style="margin-top:4px"><tr><th>हिस्सा</th><th>सही दिशा (15द)</th><th>मौजूदा वज़न</th><th>सुझाए गए वज़न</th></tr>'+R.comp.map(function(c){return '<tr><td>'+c.name+'</td><td>'+(c.acc==null?'—':Math.round(c.acc)+'%')+' <small>n='+c.n+'</small></td><td>×'+c.cur+'</td><td><b>'+(c.sug==null?'—':'×'+c.sug)+'</b></td></tr>';}).join('')+'</table></div>';});
+ h+=sec('8️⃣ "बाज़ार का इशारा" score की जाँच (Backtest)',b+'<div style="font-size:12px">⚠ n = दिन; score लगातार कई दिन 65+ या 35− रहता है, इसलिए एक ही तेज़ी/गिरावट कई बार गिनी जाती है — असली अलग-अलग मौके n से कम हैं।<br>सुझाए गए वज़न सिर्फ़ दिखाए हैं — app के मौजूदा (manual) वज़न नहीं बदले गए। नियम: सही दिशा 50% = ×0, 60% = ×1, 70%+ = ×2 (30 से कम मौके हों तो —)।</div>'+saHelp('Score 65+ के बाद ज़्यादातर बार भाव बढ़ा हो (और "सभी दिनों" से ज़्यादा) तभी score पर भरोसा करें। जो हिस्सा 50% के आसपास सही है, वो सिर्फ़ शोर है।'));
+ // ---- 9 EOQ + safety ----
+ var pf=(typeof DL!='undefined'&&DL.f)||{},wkS=+pf.pl_weekly||0,ld0=+pf.pl_lead||0,E={D:+saGet('eoq.D',wkS?Math.round(wkS*52/12):''),sD:+saGet('eoq.sD',''),S:+saGet('eoq.S',''),h:+saGet('eoq.h',''),L:+saGet('eoq.L',ld0||''),sL:+saGet('eoq.sL',''),P:+saGet('eoq.P',Math.round(px(I.kamdhenu)||0))};
+ b='<div class="row" style="font-size:13px"><label>महीने की बिक्री (टन)<br>'+saInp('eoq.D',E.D||'')+'</label><label>उसका SD (टन)<br>'+saInp('eoq.sD',E.sD||'')+'</label><label>एक ऑर्डर का ख़र्च ₹ (भाड़ा आदि)<br>'+saInp('eoq.S',E.S||'',90)+'</label><label>रखने का ख़र्च % / महीना<br>'+saInp('eoq.h',E.h||'')+'</label><label>माल का भाव ₹/t<br>'+saInp('eoq.P',E.P||'',90)+'</label><label>Lead time दिन<br>'+saInp('eoq.L',E.L||'')+'</label><label>Lead time SD दिन<br>'+saInp('eoq.sL',E.sL||'')+'</label></div>';
+ if(E.D>0&&E.S>0&&E.h>0&&E.P>0){var H=E.h/100*E.P,Q=Math.sqrt(2*E.D*E.S/H),Lm=(E.L||0)/30,sLm=(E.sL||0)/30,ss=1.65*Math.sqrt(Lm*(E.sD||0)*(E.sD||0)+E.D*E.D*sLm*sLm),rop=E.D*Lm+ss;
+  b+='<div class="k"><b>EOQ: '+Q.toFixed(1)+' टन</b> प्रति ऑर्डर (≈ महीने में '+(E.D/Q).toFixed(1)+' ऑर्डर)<br><b>Safety stock: '+ss.toFixed(1)+' टन</b> (95%, z=1.65)<br>Re-order level: '+rop.toFixed(1)+' टन (lead time की बिक्री + safety)<br><small>EOQ = √(2 × बिक्री × ऑर्डर ख़र्च ÷ रखने का ख़र्च ₹'+Math.round(H)+'/t/महीना) · Safety = 1.65 × √(lead × SD² + बिक्री² × lead SD²)</small></div>';}
+ else b+='<div style="font-size:12px;color:#a33">महीने की बिक्री, ऑर्डर ख़र्च, रखने का % और भाव भरें।'+(wkS?' (बिक्री Stock Planner से भरी: हफ़्ता '+wkS+' t)':'')+'</div>';
+ h+=sec('9️⃣ कितना माल एक बार में मँगाएँ (EOQ) + Safety stock',b+saHelp('EOQ = भाड़ा/ऑर्डर ख़र्च और माल रखने का ख़र्च (ब्याज, जगह) बैलेंस करके एक बार में सबसे सस्ता पड़ने वाला ऑर्डर। Safety stock = बिक्री और माल आने के समय के उतार-चढ़ाव से बचाव। ⚠ सही नतीजे के लिए अपनी असली महीने-वार बिक्री (Tally) का SD भरें।'));
+ // ---- D stock P&L ----
+ b='<div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>Stock टन</th><th>ख़रीद भाव ₹/t</th><th>आज</th><th>फ़ायदा/नुकसान</th><th>आज का बदलाव</th></tr>';var tot=0,totd=0;
+ SA_ITEMS.forEach(function(t){var it=I[t[0]],r=it.r,tn=+saGet('pnl.'+t[0]+'.t',''),pr=+saGet('pnl.'+t[0]+'.r',''),P=px(it),pv=r.length>1?saDisp(it.id,r[r.length-2].price,r[r.length-2].date):null,g=(tn>0&&pr>0&&P!=null)?(P-pr)*tn:null,dg=(tn>0&&P!=null&&pv!=null)?(P-pv)*tn:null;if(g!=null)tot+=g;if(dg!=null)totd+=dg;
+  function c(x){return x==null?'—':'<b style="color:'+(x<0?'#b02a1e':'#1d7a38')+'">'+(x<0?'−':'+')+fmt(Math.abs(x))+'</b>';}
+  b+='<tr><td>'+SR.esc(it.name)+'</td><td>'+saInp('pnl.'+t[0]+'.t',tn||'',60)+'</td><td>'+saInp('pnl.'+t[0]+'.r',pr||'',80)+'</td><td>'+fmt(P)+'<br><small>'+(r.length?dmy(r[r.length-1].date):'')+'</small></td><td>'+c(g)+'</td><td>'+c(dg)+'</td></tr>';});
+ b+='<tr><td colspan="4"><b>कुल</b></td><td>'+(tot<0?'−':'+')+fmt(Math.abs(tot))+'</td><td>'+(totd<0?'−':'+')+fmt(Math.abs(totd))+'</td></tr></table></div>';
+ h+=sec('🅳 मेरे stock का आज का फ़ायदा/नुकसान (Mark-to-market)',b+saHelp('टन और ख़रीद भाव भरें (इसी फ़ोन में save)। आज के बाज़ार भाव से stock की कीमत का फ़र्क — असली मुनाफ़ा बेचने पर ही। "आज का बदलाव" = पिछले भाव-दिन से। Kamdhenu = 10–25 list भाव (GST/loading बिना)।'),true);
+ // ---- E alerts ----
+ b='<div class="row" style="font-size:13px"><select id="sa_al_id">'+SA_ITEMS.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select><select id="sa_al_op"><option value="le">≤ (इतना या नीचे)</option><option value="ge">≥ (इतना या ऊपर)</option></select><input id="sa_al_p" type="number" placeholder="भाव ₹/t" style="width:100px"><button onclick="saAddAlert()">जोड़ें</button></div>';
+ b+=saPreset(I)+'<div style="font-size:13px;margin-top:6px"><b>अपने और लेवल:</b></div>';
+ b+=AL.length?'<table class="fvt">'+AL.map(function(a,i){var p=px(I[a.id]),hit=p!=null&&(a.op=='ge'?p>=+a.price:p<=+a.price);return '<tr style="'+(hit?'background:#ffd6d6':'')+'"><td>'+SR.esc(I[a.id].name)+'</td><td>'+(a.op=='ge'?'≥ ':'≤ ')+fmt(+a.price)+'</td><td>आज '+fmt(p)+(hit?' <b>🔔 छू गया</b>':'')+'</td><td><button class="r" onclick="saDelAlert('+i+')">🗑</button></td></tr>';}).join('')+'</table>':'<div style="font-size:12px">अभी कोई alert नहीं।</div>';
+ b+='<button class="g" style="margin-top:6px" onclick="saAlertFile()">📄 alert_levels.json डाउनलोड करें</button>';
+ h+=sec('🅴 मेरे Alert लेवल',b+saHelp('जैसे Kamdhenu ≤ ₹47,500। लेवल इसी फ़ोन में save होते हैं और भाव छूते ही इस tab में सबसे ऊपर लाल पट्टी दिखती है। Hourly WhatsApp रिपोर्ट में भी चाहिए तो बॉट को लेवल लिखकर भेजें (या ये फ़ाइल भेजें) — वो alert_levels.json में जोड़ देगा।'),true);
+ return h;}
+function saPreset(I){var k=I.kamdhenu.r,bl=I.billet_raipur.r,pd=I.pdri_raipur.r;if(!k.length||!bl.length||!pd.length)return saFew('Kamdhenu/billet/PDRI भाव नहीं मिला');
+ var kl=k[k.length-1],list=RL.VAL.kamListAdd(kl.date,kl.price),basic=list-6000,bp=bl[bl.length-1],pp=pd[pd.length-1],gap=basic-bp.price;
+ var m={};pd.forEach(function(r){m[r.date]=r.price;});var sp=bl.filter(function(r){return m[r.date]!=null;}).map(function(r){return {date:r.date,v:r.price-m[r.date]};}),spl=sp[sp.length-1];
+ var s5=Math.round(saQ(sp.map(function(x){return x.v;}),0.05)),s95=Math.round(saQ(sp.map(function(x){return x.v;}),0.95)),p5=Math.round(saQ(pd.map(function(x){return x.price;}),0.05)),p95=Math.round(saQ(pd.map(function(x){return x.price;}),0.95));
+ var L=[['Kamdhenu basic (10–25 list − ₹6,000) < ₹37,000','special',basic,basic<37000,dmy(kl.date)],['Kamdhenu basic < ₹39,000','alert',basic,basic<39000&&basic>=37000,dmy(kl.date)],
+  ['|Kamdhenu basic − Raipur billet| > ₹1,000','special',Math.abs(gap),Math.abs(gap)>1000,(gap>=0?'basic ऊपर':'billet ऊपर')+' ('+fmt(basic)+' − '+fmt(bp.price)+')'],
+  ['Raipur billet − PDRI इतिहास के 5–95% दायरे ('+fmt(s5)+'–'+fmt(s95).replace('₹','')+') से बाहर','alert',spl.v,spl.v<s5||spl.v>s95,sp.length+' दिन, '+dmy(sp[0].date)+' से'],
+  ['Raipur PDRI इतिहास के 5–95% दायरे ('+fmt(p5)+'–'+fmt(p95).replace('₹','')+') से बाहर','alert',pp.price,pp.price<p5||pp.price>p95,pd.length+' दिन, '+dmy(pd[0].date)+' से']];
+ var hitAny=L.filter(function(x){return x[3];});
+ return (hitAny.length?'<div class="alert" style="background:#ffd6d6"><b>🔔 '+hitAny.length+' नियम लागू:</b> '+hitAny.map(function(x){return SR.esc(x[0]);}).join('; ')+'</div>':'')+
+  '<div style="font-size:13px"><b>आपके तय नियम</b> (बॉट भी हर घंटे यही जाँचता है)</div><table class="fvt"><tr><th>नियम</th><th>स्तर</th><th>अभी</th><th>स्थिति</th></tr>'+
+  L.map(function(x){return '<tr style="'+(x[3]?'background:#ffd6d6':'')+'"><td>'+SR.esc(x[0])+'<br><small>'+SR.esc(x[4])+'</small></td><td>'+(x[1]=='special'?'<b style="color:#8a1c1c">special</b>':'alert')+'</td><td>'+fmt(x[2])+'</td><td>'+(x[3]?'<b>🔔 लागू</b>':'✔ नहीं')+'</td></tr>';}).join('')+'</table>';}
+function saAddAlert(){var id=document.getElementById('sa_al_id').value,op=document.getElementById('sa_al_op').value,p=+document.getElementById('sa_al_p').value;if(!(p>0)){alert('भाव भरें');return;}SA.alerts=(SA.alerts||[]).concat([{id:id,op:op,price:p,added:today()}]);saSave();saRender();}
+function saDelAlert(i){(SA.alerts||[]).splice(i,1);saSave();saRender();}
+function saAlertFile(){var o={version:1,updated:new Date().toISOString(),alerts:(SA.alerts||[]).map(function(a){return {item:a.id,op:a.op=='ge'?'>=':'<=',price:a.price,added:a.added||null};})},bl=new Blob([JSON.stringify(o,null,1)],{type:'application/json'}),u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download='alert_levels.json';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove();},500);}
+// ===SA-UI-END===
 
 WAN=waMerge();
 var fd=document.getElementById('fd'),fp=document.getElementById('fp'),fh=document.getElementById('fh'),fl=document.getElementById('fl'),editnote=document.getElementById('editnote');
