@@ -614,7 +614,9 @@ function fileText(o){return '// Steel WhatsApp rates data file (auto-generated b
 // Margin: small-plant net ~₹500–1,800/t (MKSPL TMT roller PAT ~₹1,000/t). Kamdhenu factory net = list − ₹1,100 distributor − ₹500 royalty.
 var VAL={marginLo:500,marginMid:1000,marginHi:1800,kamDist:1100,kamRoyalty:500,pctLo:20,pctHi:80,fwdMin:80,
  kamListAdd:function(date,adj){return (date>=(DEFAULT_SETTINGS.kamdhenu_adjust_from||'2026-09-23'))?adj+(Math.abs(DEFAULT_SETTINGS.kamdhenu_adjust||6000)):adj;},
- kamBasic:function(date,list){return (date>=(DEFAULT_SETTINGS.kamdhenu_adjust_from||'2026-09-23'))?list-(Math.abs(DEFAULT_SETTINGS.kamdhenu_adjust||6000)):list;},
+ kamSmall:function(grade){return !!grade&&!/msp|basic|list/.test(grade)&&/(^|[^0-9])(6|8|32)(mm|-|$)/.test(grade)&&!/10-25|12-25/.test(grade);}, // 6/8/32mm sizes
+ kamDed:function(grade){return grade==='basic'?0:VAL.kamSmall(grade)?8000:Math.abs(DEFAULT_SETTINGS.kamdhenu_adjust||6000);}, // 6/8/32mm: list − 8,000; 10–25mm: list − 6,000
+ kamBasic:function(date,list,grade){return (date>=(DEFAULT_SETTINGS.kamdhenu_adjust_from||'2026-09-23'))?list-VAL.kamDed(grade):list;},
  note:'A = छोटे plant की पूरी लागत (ऊपरी fair, + मार्जिन तक); B = बड़े plant की पूरी लागत (निचली fair)। प्रतिशत पूरी उपलब्ध history पर।'};
 function valSort(rows,date){return (rows||[]).filter(function(r){return r&&r.date&&(!date||r.date<=date)&&isFinite(+r.price);}).map(function(r){return {date:r.date,price:+r.price,high:r.high!=null?+r.high:null,low:r.low!=null?+r.low:null};}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function valMean(a){if(!a||!a.length)return null;var s=0;for(var i=0;i<a.length;i++)s+=a[i];return s/a.length;}
@@ -1281,7 +1283,7 @@ function waCard(){if(!WA)return '<div class="card" style="margin:8px 0"><h3>📲
  var E=WA.entries,low=RL.lowConf(E),lastE=E.length?E[E.length-1]:null,h='<div class="card" style="margin:8px 0"><h3>📲 WhatsApp रेट फ़ाइल</h3>'+(WAERR?'<div class="alert">'+SR.esc(WAERR)+'</div>':'')+
   '<div class="grid">'+k('कुल रेट',E.length,'groups: '+SR.esc((WA.groups||[]).join(', ')||'—'))+k('आखिरी update',WA.updated?SR.esc(WA.updated.replace('T',' ').slice(0,16)):'—','IST')+k('आखिरी रेट',lastE?fmt(lastE.rate):'—',lastE?SR.esc((RL.CNAME[lastE.commodity]||lastE.commodity)+' '+lastE.market+' · '+lastE.group):'')+k('जाँचने लायक',low.length,'कम भरोसे वाले रेट (chart में नहीं)')+'</div>';
  var want=[['pdri','raipur'],['billet','raipur'],['billet','mandi_gobindgarh'],['ingot','raipur'],['pellet',null],['coal','mundra','indo_5000'],['coking_coal',null],['scrap_hms',null],['scrap_melting','mandi_gobindgarh'],['siman',null],['power',null],['met_coke','raipur'],['kamdhenu_nxt','jabalpur']];
- var rowsH=want.map(function(w){var o=w[2]?RL.latest(WAD,w[0],w[1],w[2]):waLatest(w[0],w[1]);if(o&&o.unit&&o.unit!='₹/t'&&w[0]=='coal')o=null;if(!o&&w[0]=='coal')o=WAD.filter(function(x){return x.commodity=='coal'&&(!x.unit||x.unit=='₹/t');}).slice(-1)[0];var kb=o&&o.commodity=='kamdhenu_nxt'&&o.grade&&!/basic|msp/.test(o.grade)&&o.date>=RL.DEFAULT_SETTINGS.kamdhenu_adjust_from;if(kb)o=Object.assign({},o,{open:RL.VAL.kamBasic(o.date,o.open),high:RL.VAL.kamBasic(o.date,o.high),low:RL.VAL.kamBasic(o.date,o.low),close:RL.VAL.kamBasic(o.date,o.close),grade:o.grade+' basic (list − ₹6,000)'});
+ var rowsH=want.map(function(w){var o=w[2]?RL.latest(WAD,w[0],w[1],w[2]):waLatest(w[0],w[1]);if(o&&o.unit&&o.unit!='₹/t'&&w[0]=='coal')o=null;if(!o&&w[0]=='coal')o=WAD.filter(function(x){return x.commodity=='coal'&&(!x.unit||x.unit=='₹/t');}).slice(-1)[0];var kb=o&&o.commodity=='kamdhenu_nxt'&&o.grade&&!/basic|msp/.test(o.grade)&&o.date>=RL.DEFAULT_SETTINGS.kamdhenu_adjust_from;if(kb)o=Object.assign({},o,{open:RL.VAL.kamBasic(o.date,o.open,o.grade),high:RL.VAL.kamBasic(o.date,o.high,o.grade),low:RL.VAL.kamBasic(o.date,o.low,o.grade),close:RL.VAL.kamBasic(o.date,o.close,o.grade),grade:o.grade+' basic (list − ₹'+RL.VAL.kamDed(o.grade).toLocaleString('en-IN')+')'});
  return o?'<tr><td>'+SR.esc((RL.CNAME[o.commodity]||o.commodity)+' '+o.market+(o.grade?' '+o.grade:'')+(o.unit&&o.unit!='₹/t'?' '+o.unit:''))+'</td><td>'+dmy(o.date)+'</td><td>'+n2(o.open)+'</td><td>'+n2(o.high)+'</td><td>'+n2(o.low)+'</td><td><b>'+n2(o.close)+'</b>'+(o.unit&&o.unit!='₹/t'?' <small>'+SR.esc(o.unit)+'</small>':'')+'</td><td>'+o.n+'</td></tr>':'';}).join('');
  if(rowsH)h+='<div style="overflow:auto"><table><tr><th>आखिरी दिन</th><th>तारीख</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>रेट</th></tr>'+rowsH+'</table></div>';
  if(low.length)h+='<details><summary>⚠ कम भरोसे वाले रेट (आखिरी 10) — जाँचें</summary><ul style="font-size:13px">'+low.slice(-10).reverse().map(function(e){return '<li>'+SR.esc(e.datetime.slice(0,16).replace('T',' ')+' · '+e.group+' · '+(RL.CNAME[e.commodity]||e.commodity)+' '+e.rate+' ('+(e.flags||[]).join(', ')+') «'+e.raw_text+'»')+'</li>';}).join('')+'</ul></details>';
@@ -1383,8 +1385,8 @@ function msPct(a,b){return (a&&b)?(b-a)/a*100:null;}
 function msSeries(d){var V=valCollect(d),k10=msWA('kamdhenu_nxt','jabalpur','10-25mm');
  var kb=msUpTo(rows('kamdhenu'),d);
  var kl=msUpTo(k10,d);if(!kl.length&&kb.length)kl=kb.map(function(r){return {date:r.date,price:VAL_KADD(r)};});
- var kB=function(L){return L.map(function(r){return Object.assign({},r,{price:RL.VAL.kamBasic(r.date,r.price),high:r.high!=null?RL.VAL.kamBasic(r.date,r.high):r.high,low:r.low!=null?RL.VAL.kamBasic(r.date,r.low):r.low});});},k68=msUpTo(msWA('kamdhenu_nxt','jabalpur','6-8-32mm'),d);
- return {kam_1025b:kB(kl),kam_68b:kB(k68),billet_raipur:V.billet_raipur,ingot_raipur:V.ingot_raipur,pdri_raipur:V.pdri_raipur,cdri_raipur:msUpTo(msWA('cdri','raipur',''),d),hms_raipur:V.hms_raipur||[],billet_mandi:V.billet_mandi,ingot_mandi:msUpTo(msWA('ingot','mandi_gobindgarh',''),d),kam_basic:kb,kam_1025:kl,_V:V};}
+ var kB=function(L,g){return L.map(function(r){return Object.assign({},r,{price:RL.VAL.kamBasic(r.date,r.price,g),high:r.high!=null?RL.VAL.kamBasic(r.date,r.high,g):r.high,low:r.low!=null?RL.VAL.kamBasic(r.date,r.low,g):r.low});});},k68=msUpTo(msWA('kamdhenu_nxt','jabalpur','6-8-32mm'),d);
+ return {kam_1025b:kB(kl,'10-25mm'),kam_68b:kB(k68,'6-8-32mm'),billet_raipur:V.billet_raipur,ingot_raipur:V.ingot_raipur,pdri_raipur:V.pdri_raipur,cdri_raipur:msUpTo(msWA('cdri','raipur',''),d),hms_raipur:V.hms_raipur||[],billet_mandi:V.billet_mandi,ingot_mandi:msUpTo(msWA('ingot','mandi_gobindgarh',''),d),kam_basic:kb,kam_1025:kl,_V:V};}
 function VAL_KADD(r){return RL.VAL.kamListAdd(r.date,r.price);}
 function msMkRow(name,L,d,unit){L=msUpTo(L,d);var o={name:name,unit:unit||'₹/t'};if(!L.length){o.flag='रेट नहीं मिला';return o;}
  var last=L[L.length-1],prev=L.length>1?L[L.length-2]:null,w7=msAt(L,addDays(last.date,-7)),w30=msAt(L,addDays(last.date,-30));
@@ -1446,7 +1448,7 @@ function msScore(K,T,F,SE,VB){var s=50,parts=[];function add(n,t){s+=n;parts.pus
 function msBuild(dd){INS=RL.inputSeries(WA&&WA.inputs||[],FV.manual,WAD);var d=dd||fvAsof(),IA=RL.inputsAt(INS,'A',d),IB=RL.inputsAt(INS,'B',d),A=RL.fvCalc(IA.v),B=RL.fvCalc(IB.v);
  var S=msSeries(d),V=S._V,O={ver:'v5',asof:d,P:Object.assign({},MSP)};
  O.market=[msMkRow('Raipur Billet',S.billet_raipur,d),msMkRow('Raipur Ingot',S.ingot_raipur,d),msMkRow('Raipur Sponge PDRI',S.pdri_raipur,d),msMkRow('Raipur Sponge CDRI',S.cdri_raipur,d),msMkRow('Raipur HMS scrap (80:20)',S.hms_raipur,d),
-  msMkRow('Mandi Gobindgarh Billet',S.billet_mandi,d),msMkRow('Mandi Gobindgarh Ingot',S.ingot_mandi,d),msMkRow('Kamdhenu NXT basic (opening)',S.kam_basic,d),msMkRow('Kamdhenu NXT 10–25mm basic (list − ₹6,000)',S.kam_1025b,d),msMkRow('Kamdhenu NXT 6/8/32mm basic (list − ₹6,000)',S.kam_68b,d)];
+  msMkRow('Mandi Gobindgarh Billet',S.billet_mandi,d),msMkRow('Mandi Gobindgarh Ingot',S.ingot_mandi,d),msMkRow('Kamdhenu NXT basic (opening)',S.kam_basic,d),msMkRow('Kamdhenu NXT 10–25mm basic (list − ₹6,000)',S.kam_1025b,d),msMkRow('Kamdhenu NXT 6/8/32mm basic (list − ₹8,000)',S.kam_68b,d)];
  O.raw=msRaw(d,IA,IB);
  O.cost={A:{sponge:A.sponge.total,billet:A.billet.total,tmt:A.tmt.total,landed:A.tmt.landed},B:{sponge:B.sponge.total,billet:B.billet.total,tmt:B.tmt.total,landed:B.tmt.landed}};
  var VV=RL.valuate(V,{date:d,A:A,B:B});O.valPurchase=VV.purchase;
@@ -1486,7 +1488,7 @@ function msRender(){var el=document.getElementById('mspanel');if(!el)return;var 
  // 1 market
  h+='<h3>1. बाज़ार रेट / Market rates</h3><div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>भाव</th><th>पिछला दिन</th><th>7 दिन</th><th>30 दिन</th></tr>';
  O.market.forEach(function(r){h+='<tr><td><b>'+SR.esc(r.name)+'</b>'+(r.date?'<br><small>'+dmy(r.date)+'</small>':'')+(r.flag?'<br><small style="color:#b02a1e">⚠ '+SR.esc(r.flag)+'</small>':'')+'</td><td>'+(r.price!=null?'<b>'+fmt(r.price)+'</b>':'<b style="color:#b02a1e">रेट नहीं मिला</b>')+'</td><td>'+msChg(r.dPrev)+'</td><td>'+msChg(r.d7)+'</td><td>'+msChg(r.d30)+'</td></tr>';});
- h+='</table></div><small>Kamdhenu basic = list − ₹6,000 (23-Sep से; उससे पहले पोस्ट वाला भाव ही basic था)। 6/8/32mm का list भी − ₹6,000। ₹2,500 cut इस series में नहीं लगाया।</small>';
+ h+='</table></div><small>Kamdhenu basic = list − ₹6,000 (23-Sep से; उससे पहले पोस्ट वाला भाव ही basic था)। 6/8/32mm का basic = list − ₹8,000। ₹2,500 cut इस series में नहीं लगाया।</small>';
  // 2 raw
  h+='<h3 style="margin-top:12px">2. कच्चा माल / Raw materials</h3><div style="overflow:auto"><table class="fvt"><tr><th>माल</th><th>A छोटा</th><th>B बड़ा</th><th>WhatsApp बाज़ार</th><th>स्थिति</th></tr>';
  function rv(v,u){return u=='₹/unit'?('₹'+(+v).toFixed(2)):fmt(v);}
