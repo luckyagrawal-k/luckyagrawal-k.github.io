@@ -22,12 +22,14 @@ details{margin:8px}.legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13
 .pvmode>.card:not(#pvpanel),.pvmode>details,.pvmode>#samplebar{display:none!important}#pvpanel .fvt td{vertical-align:top}#pvpanel .k b{display:inline;font-size:inherit}
 .samode>.card:not(#sapanel),.samode>details,.samode>#samplebar{display:none!important}#sapanel .fvt td{vertical-align:top}#sapanel summary{font-size:15px;padding:4px 0}
 .khmode>.card:not(#khpanel),.khmode>details,.khmode>#samplebar{display:none!important}#khpanel .fvt td{vertical-align:top}
+.tsbar{background:#fff8e1;border:1px solid #f0d27a;color:#5a4300;font-size:13px;font-weight:600;padding:6px 10px;margin:6px 0;border-radius:6px;line-height:1.4}
 header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .dl-off{background:#fff;color:#1f3b63;text-decoration:none;font-size:13px;font-weight:700;padding:8px 12px;border-radius:6px;white-space:nowrap}
 .dl-off:active,.dl-off:hover{background:#e8eef8}
 .off-badge{background:#fff3;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px}
 </style></head><body>
 <header><span>📈 Steel भाव Range v5 — Market Sheet</span><a class="dl-off" href="steel-range-offline.html" download="steel-range-v5-offline.html">ऑफ़लाइन के लिए डाउनलोड करें</a></header>
+<div id="tsbar" class="tsbar"></div>
 <div class="tabs" id="tabs"></div>
 <div class="card" id="mspanel" style="display:none"></div>
 <div class="card" id="fvpanel" style="display:none"></div>
@@ -925,7 +927,7 @@ SR.DT=DT;
 if(typeof module!=='undefined')module.exports=SR;
 // ===LOGIC-END===
 
-var C=[{id:'billet_mandi',n:'Billet Mandi Govindgarh'},{id:'billet_raipur',n:'Billet Raipur'},{id:'ingot_raipur',n:'Ingot Raipur'},{id:'pdri_raipur',n:'Sponge PDRI Raipur'},{id:'kamdhenu',n:'Kamdhenu NXT'},{id:'tmt',n:'TMT (Basic)'},{id:'ore',n:'Iron Ore'}];
+var C=[{id:'billet_mandi',n:'Billet Mandi Govindgarh'},{id:'billet_raipur',n:'Billet Raipur'},{id:'ingot_raipur',n:'Ingot Raipur'},{id:'pdri_raipur',n:'Sponge PDRI Raipur'},{id:'kamdhenu',n:'Kamdhenu NXT basic'},{id:'tmt',n:'TMT (Basic)'},{id:'ore',n:'Iron Ore'}];
 var LOADWARN='',KEY='steelRangeV1',DB=load(),cur='ms',zoomD=90,editIdx=null,WAN=0;
 function sanitizeDB(x){var bad=0;C.forEach(function(c){var arr=Array.isArray(x.data[c.id])?x.data[c.id]:[],seen={},out=[];arr.forEach(function(r){var z=SR.cleanRow(r);if(z.err){bad++;return;}seen[z.row.date]=z.row;});
  Object.keys(seen).sort().forEach(function(k){out.push(seen[k]);});x.data[c.id]=out;});return bad;}
@@ -939,7 +941,7 @@ function fmt(n){return n==null||isNaN(n)?'—':'₹'+Math.round(n).toLocaleStrin
 function today(){var t=new Date();t.setMinutes(t.getMinutes()-t.getTimezoneOffset());return t.toISOString().slice(0,10);}
 function tabs(){document.getElementById('tabs').innerHTML='<button class="'+(cur=='ms'?'on':'')+'" onclick="cur=\'ms\';render();scrollTo(0,0)">📋 मार्केट शीट / Market Sheet</button>'+C.map(function(c){return '<button class="'+(c.id==cur?'on':'')+'" onclick="cur=\''+c.id+'\';resetForm();render()">'+c.n+'</button>';}).join('')+'<button class="'+(cur=='fv'?'on':'')+'" onclick="cur=\'fv\';render();scrollTo(0,0)">⚖ लागत बनाम बाज़ार</button><button class="'+(cur=='val'?'on':'')+'" onclick="cur=\'val\';render();scrollTo(0,0)">📊 मूल्यांकन</button>'+[['pv','🎯 Probability + Volatility'],['prob','🎲 Probability (संभावना)'],['vol','🌊 Volatility (उतार-चढ़ाव)'],['sa','🧠 Smart Analytics'],['kh','✅ खरीद फ़ैसला']].map(function(t){return '<button class="'+(cur==t[0]?'on':'')+'" onclick="cur=\''+t[0]+'\';render();scrollTo(0,0)">'+t[1]+'</button>';}).join('');
  document.getElementById('zoom').innerHTML=[['1M',30],['3M',90],['6M',180],['1Y',365],['All',0]].map(function(z){return '<button class="'+(zoomD==z[1]?'on':'')+'" onclick="zoomD='+z[1]+';render()">'+z[0]+'</button>';}).join('');}
-function render(){tabs();if(khMode())return;if(saMode())return;if(pvMode())return;if(msMode())return;if(fvMode()||valMode())return;var r=rows(cur),a=SR.analyze(r),s=document.getElementById('status'),SG=SR.signal(r,sigOpt(cur)),SH=shortAdv(a,SG);
+function render(){tabs();tsBar();if(khMode())return;if(saMode())return;if(pvMode())return;if(msMode())return;if(fvMode()||valMode())return;var r=rows(cur),a=SR.analyze(r),s=document.getElementById('status'),SG=SR.signal(r,sigOpt(cur)),SH=shortAdv(a,SG);
  document.getElementById('samplebar').style.display=r.some(function(x){return x.sample;})?'block':'none';
  var W=[];if(LOADWARN)W.push(LOADWARN);if(WAERR)W.push(WAERR);if(r.length&&!r.some(function(x){return !x.wa;}))W.push('इस browser/link में आपके हाथ से डाले भाव नहीं हैं, सिर्फ़ 📲 WhatsApp भाव हैं। पुरानी फ़ाइल वाले भाव लाने हों तो: पुरानी फ़ाइल खोलें → नीचे "Data / Backup" में "Backup (JSON)" दबाएँ → फिर यहाँ नीचे "📥 मेरा data जोड़ें" से वो फ़ाइल चुनें।');if(r.some(function(x){return x.wa;}))W.push('📲 = WhatsApp फ़ाइल से आया भाव ('+WAN+' दिन जुड़े; browser में save नहीं होता, फ़ाइल से हर बार आता है)');if(r.length){var age=Math.round((new Date(today())-new Date(r[r.length-1].date))/864e5);if(age>3)W.push('आखिरी भाव '+age+' दिन पुराना है — संकेत पुराने हो सकते हैं।');}
  if(r.length&&r.length<80)W.push('सिर्फ़ '+r.length+' entries — लंबे संकेत के लिए कम से कम 80 चाहिए।');
@@ -1667,6 +1669,16 @@ function pvExplain(I){var L=I.filter(function(o){return o.vol&&o.vol.ok;}),h='<d
  h+='<p class="alert"><b>4) ध्यान दें:</b> Volatility सिर्फ़ झटके का नाप है, <b>दिशा नहीं</b> — भाव बढ़ेगा या घटेगा, ये 🎲 Probability tab (zone और 15/30 दिन %) में देखें। Quote दिन और margin सिर्फ़ गणित से निकले सुझाव हैं, सलाह नहीं।</p>';
  return h+'</div></details>';}
 // ===PV-UI-END===
+// ---- last-updated banner (every tab) ----
+var TS_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function tsParts(iso){if(!iso)return null;var t=Date.parse(String(iso).replace(' ','T')+(/[+-]\d{2}:\d{2}$|Z$/.test(String(iso))?'':'+05:30'));if(!isFinite(t))return null;var d=new Date(t+5.5*3600e3);
+ var H=d.getUTCHours(),M=d.getUTCMinutes(),per=H>=4&&H<12?'सुबह':H>=12&&H<16?'दोपहर':H>=16&&H<20?'शाम':'रात',h12=H%12||12;
+ return {day:('0'+d.getUTCDate()).slice(-2)+'-'+TS_MON[d.getUTCMonth()],yr:d.getUTCFullYear(),time:per+' '+h12+':'+('0'+M).slice(-2)};}
+function tsFmt(iso,noYear){var p=tsParts(iso);return p?(p.day+(noYear?'':'-'+p.yr)+', '+p.time):'—';}
+function tsInfo(){var W=(typeof WA!=='undefined'&&WA)?WA:(window.WA_RATES||null),meta=window.WA_RATES_META||null,gen=meta&&meta.generatedAt?meta.generatedAt:(W&&W.updated)||null,last=null;
+ if(W&&W.entries)for(var i=0;i<W.entries.length;i++){var e=W.entries[i];if(e&&e.datetime&&(!last||e.datetime>last.datetime))last=e;}
+ return {gen:gen,last:last,text:'🕒 आखिरी update: '+tsFmt(gen)+' (IST)'+(last?' · सबसे नया भाव: '+tsFmt(last.datetime,true)+' ('+(last.group||'')+')':'')};}
+function tsBar(){var el=document.getElementById('tsbar');if(!el)return;var I=tsInfo();el.textContent=I.text;}
 
 // ===SA-UI-START=== v5 "🧠 Smart Analytics" tab — every number from real rows (BASE_HIST + DB + WhatsApp via valCollect); internet-filled/interpolated rows skipped; nothing invented.
 // Re-uses A/B cost (RL.fvCalc + dated inputs) and MSP.channel (₹2,500) read-only; never changes them. Inputs saved in localStorage 'steelRangeV5_sa'.
