@@ -2072,15 +2072,27 @@ function nwChg(rows,back){if(!rows||rows.length<2)return null;var L=rows[rows.le
 function nwChgTxt(c,dec){if(!c)return '—';var s=c.d>0?'▲':c.d<0?'▼':'';return '<span style="color:'+(c.d>0?'#1d7a38':c.d<0?'#b02a1e':'#555')+'">'+s+Math.abs(c.d).toFixed(dec)+' ('+(c.p>=0?'+':'')+c.p.toFixed(1)+'%)</span>';}
 function nwNews(){var M=window.MKT_NEWS||null,h='<h3>📰 बाज़ार खबर (Dollar, Brent, China)</h3><div style="font-size:12px;color:#555">सिर्फ़ असली भाव — जो नहीं मिला वहाँ "भाव नहीं मिला"। भाव का असर सीधा नहीं होता, सिर्फ़ माहौल समझने के लिए।</div>';
  h+='<div style="overflow:auto"><table class="fvt"><tr><th>चीज़</th><th>आज/आखिरी</th><th>पिछले दिन से</th><th>7 दिन में</th></tr>';
- function row(name,mean,o,dec){if(!o||!o.rows||!o.rows.length)return '<tr><td><b>'+name+'</b><br><small>'+mean+'</small></td><td colspan="3"><b style="color:#b02a1e">भाव नहीं मिला</b></td></tr>';var L=o.rows[o.rows.length-1];
-  return '<tr><td><b>'+name+'</b><br><small>'+mean+'</small><br><small style="color:#666">स्रोत: '+SR.esc(o.src||'')+'</small></td><td><b>'+L.v.toFixed(dec)+'</b> <small>'+SR.esc(o.unit||'')+'</small><br><small>'+dmy(L.date)+(function(){var g=Math.round((Date.now()-new Date(L.date+'T12:00:00+05:30'))/864e5);return g>7?' <b style="color:#a33">('+g+' दिन पुराना)</b>':'';})()+'</small></td><td>'+nwChgTxt(nwChg(o.rows),dec)+'</td><td>'+nwChgTxt(nwChg(o.rows,7),dec)+'</td></tr>';}
- h+=row('Dollar (USD/INR)','1 डॉलर कितने रुपये का — रुपया कमज़ोर हो तो imported coal/coke महँगा',M&&M.usdinr,2);
- h+=row('Brent crude','कच्चा तेल — भाड़ा और ईंधन ख़र्च पर असर',M&&M.brent,2);
- function waRow(name,mean,c,m,g){var L=(WAD||[]).filter(function(x){return x.commodity==c&&x.market==m&&x.grade==g;}).map(function(x){return {date:x.date,v:+x.close};}).sort(function(a,b){return a.date<b.date?-1:1;});var u=(L[0]&&L[0].unit)||'';return row(name,mean,L.length?{rows:L,unit:'$/t',src:'WhatsApp group (Coal & Coke)'}:null,0);}
+ function ageTag(date){var g=Math.round((Date.now()-new Date(date+'T12:00:00+05:30'))/864e5);return g>7?' <b style="color:#a33">('+g+' दिन पुराना)</b>':'';}
+ function liveCell(o,dec,live){var hasO=o&&o.rows&&o.rows.length,L=hasO?o.rows[o.rows.length-1]:null,hasL=live&&isFinite(+live.v)&&+live.v>0;
+  if(!hasO&&!hasL)return '<b style="color:#b02a1e">भाव नहीं मिला</b>';
+  var s='';
+  if(hasL){s+='<b style="font-size:16px">'+(+live.v).toFixed(dec)+'</b> <small>'+SR.esc(live.unit||(o&&o.unit)||'')+'</small>';
+   s+='<br><small>live ('+SR.esc(live.label||'Yahoo')+')'+(live.asOf?(' · '+tsFmt(live.asOf)+' IST'):'')+'</small>';
+   if(L)s+='<br><small style="color:#555">आधिकारिक रोज़ का भाव: <b>'+L.v.toFixed(dec)+'</b> ('+dmy(L.date)+ageTag(L.date)+')</small>';
+   else s+='<br><small style="color:#a33">आधिकारिक रोज़ का भाव नहीं मिला</small>';
+   return s;}
+  return '<b>'+L.v.toFixed(dec)+'</b> <small>'+SR.esc(o.unit||'')+'</small><br><small>'+dmy(L.date)+ageTag(L.date)+'</small>';}
+ function srcLine(o,live){var a=[];if(live&&live.v>0&&live.src)a.push(live.src);if(o&&o.src)a.push(o.src);return a.length?'<br><small style="color:#666">स्रोत: '+SR.esc(a.join(' · '))+'</small>':'';}
+ function row(name,mean,o,dec,live){var hasO=o&&o.rows&&o.rows.length,hasL=live&&isFinite(+live.v)&&+live.v>0;
+  if(!hasO&&!hasL)return '<tr><td><b>'+name+'</b><br><small>'+mean+'</small></td><td colspan="3"><b style="color:#b02a1e">भाव नहीं मिला</b></td></tr>';
+  return '<tr><td><b>'+name+'</b><br><small>'+mean+'</small>'+srcLine(o,live)+'</td><td>'+liveCell(o,dec,live)+'</td><td>'+(hasO?nwChgTxt(nwChg(o.rows),dec):'—')+'</td><td>'+(hasO?nwChgTxt(nwChg(o.rows,7),dec):'—')+'</td></tr>';}
+ h+=row('Dollar (USD/INR)','1 डॉलर कितने रुपये का — रुपया कमज़ोर हो तो imported coal/coke महँगा',M&&M.usdinr,2,M&&M.live&&M.live.usdinr);
+ h+=row('Brent crude','कच्चा तेल — भाड़ा और ईंधन ख़र्च पर असर',M&&M.brent,2,M&&M.live&&M.live.brent);
+ function waRow(name,mean,c,m,g){var L=(WAD||[]).filter(function(x){return x.commodity==c&&x.market==m&&x.grade==g;}).map(function(x){return {date:x.date,v:+x.close};}).sort(function(a,b){return a.date<b.date?-1:1;});return row(name,mean,L.length?{rows:L,unit:'$/t',src:'WhatsApp group (Coal & Coke)'}:null,0);}
  h+=waRow('Australia coking coal (HCC, Hay Point)','विदेशी coking coal — coke और BF लागत पर असर','coking_coal','hay_point','aus_hcc');
  h+=waRow('South Africa coal 5500 (Richards Bay)','विदेशी thermal coal — sponge plant का ईंधन','coal','richards_bay','sa_5500');
  ['SGX iron ore (Singapore)','DCE iron ore (China)','China rebar (SHFE)','DCE coking coal (China)','DCE coke (China)'].forEach(function(n){h+=row(n,'China का भाव — WhatsApp groups में नहीं आया, कोई भरोसेमंद मुफ़्त source नहीं',null,0);});
- h+='</table></div><div style="font-size:11px;color:#666">'+(M&&M.updatedAt?'Dollar/Brent आखिरी बार बदले: '+tsFmt(M.updatedAt)+' (IST) · ':'Dollar/Brent का data इस प्रति में नहीं · ')+'Dollar = European Central Bank का रोज़ का reference भाव (शनिवार-रविवार नहीं); Brent = US EIA का spot भाव (1–2 दिन देर से आता है)। Coal के भाव WhatsApp से।</div>';
+ h+='</table></div><div style="font-size:11px;color:#666">'+(M&&M.updatedAt?'Dollar/Brent आखिरी बार बदले: '+tsFmt(M.updatedAt)+' (IST) · ':'Dollar/Brent का data इस प्रति में नहीं · ')+'Dollar का लगभग live भाव Yahoo से (INR=X)। आधिकारिक रोज़ का भाव ECB का है (शनिवार-रविवार नहीं छपता)। Brent का live भाव ICE का चालू महीने वाला futures (Yahoo)। आधिकारिक spot US EIA का है (करीब 1 हफ़्ते देर से आ सकता है)। दिन/7 दिन का बदलाव आधिकारिक रोज़ के भाव पर है। Coal के भाव WhatsApp से।</div>';
  return h;}
 function nwQ(a,q){if(!a.length)return null;var s=a.slice().sort(function(x,y){return x-y;}),i=(s.length-1)*q,lo=Math.floor(i),hi=Math.ceil(i);return s[lo]+(s[hi]-s[lo])*(i-lo);}
 // 7-day range v2: last 6 months, conditioned on the 14-day trend (same direction windows only)
