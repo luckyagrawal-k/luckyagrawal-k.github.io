@@ -24,6 +24,7 @@ details{margin:8px}.legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13
 .khmode>.card:not(#khpanel),.khmode>details,.khmode>#samplebar{display:none!important}#khpanel .fvt td{vertical-align:top}
 .tsbar{background:#fff8e1;border:1px solid #f0d27a;color:#5a4300;font-size:13px;font-weight:600;padding:6px 10px;margin:6px 0;border-radius:6px;line-height:1.4}
 .nwmode>.card:not(#mkpanel):not(#f7panel),.nwmode>details,.nwmode>#samplebar{display:none!important}#mkpanel .fvt td,#f7panel .fvt td{vertical-align:top}.nwsig{border:2px solid;border-radius:10px;padding:8px 12px;margin:8px 0}.nwbig{font-size:26px;font-weight:800;line-height:1.2}.nwwhy{font-size:14px;margin-top:4px;line-height:1.45}.nwtr{font-size:12px;color:#333;margin-top:3px}.nwhow{font-size:13px;margin-top:4px}.nwhow summary{cursor:pointer;color:#1f3b63;font-weight:600}.nwtrust{font-size:12px;color:#333;background:#f4f6fa;border-radius:6px;padding:4px 8px;margin:4px 0}.nwtrust summary{cursor:pointer}.gl{border-bottom:1px dotted #1f3b63;cursor:pointer}#glpop{position:fixed;left:8px;right:8px;bottom:10px;z-index:9999;background:#1f3b63;color:#fff;font-size:15px;line-height:1.4;padding:10px 12px;border-radius:8px;box-shadow:0 2px 10px #0006;display:none}#glpop .glx{float:right;padding:0 4px;cursor:pointer}
+.spmode>.card:not(#sppanel),.spmode>details,.spmode>#samplebar{display:none!important}#sppanel .spsec{border-top:2px solid #1f3b63;margin-top:12px;padding-top:4px}#sppanel .spnow{background:#f4f6fa;border-radius:8px;padding:6px 10px}#sppanel .fvt td{vertical-align:top}#sppanel .spbar{position:relative;height:10px;background:linear-gradient(90deg,#d8efdf,#f6efc9,#f4d2cf);border-radius:5px;margin:4px 0}#sppanel .spmk{position:absolute;top:-4px;width:6px;height:18px;margin-left:-3px;background:#1f3b63;border-radius:3px}#sppanel .spbl{display:flex;justify-content:space-between;font-size:11px;color:#444}#sppanel .spb{border:1px solid #1f3b63;background:#fff;color:#1f3b63;border-radius:6px;padding:4px 10px;font-size:13px;margin-left:4px}#sppanel .spb.on{background:#1f3b63;color:#fff}#sppanel .spq input{font-size:16px;padding:6px;border:1px solid #9aa7bd;border-radius:6px}#sppanel .spscroll{max-height:340px;overflow:auto;border:1px solid #e1e6ef;border-radius:6px}#sppanel .spscroll th{position:sticky;top:0;background:#eef2f9}
 header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .dl-off{background:#fff;color:#1f3b63;text-decoration:none;font-size:13px;font-weight:700;padding:8px 12px;border-radius:6px;white-space:nowrap}
 .dl-off:active,.dl-off:hover{background:#e8eef8}
@@ -42,6 +43,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;fle
 <div class="card" id="khpanel" style="display:none"></div>
 <div class="card" id="mkpanel" style="display:none"></div>
 <div class="card" id="f7panel" style="display:none"></div>
+<div class="card" id="sppanel" style="display:none"></div>
 <div id="samplebar" class="card sample" style="display:none">⚠ इस commodity में SAMPLE (उदाहरण) data है — ये असली बाज़ार भाव नहीं हैं। <button class="r" onclick="clearSample()">Sample data हटाएँ</button></div>
 <div class="card" style="font-size:13px"><b>v5:</b> नया पहला tab "📋 मार्केट शीट" — बाज़ार + कच्चा माल रेट, लागत, सस्ता/सही/महँगा, Kamdhenu रेट सही खुला?, ट्रेंड, संभावना, सीज़न और आज की सलाह (Excel डाउनलोड)। <b>v4:</b> WhatsApp रेट फ़ाइल (wa-rates/rates.js) अपने-आप जुड़ती है (📲 निशान), नया tab "⚖ लागत बनाम बाज़ार" और "📊 मूल्यांकन" (सस्ता/सही/महँगा + ख़रीद सलाह)। <b>v3:</b> नीचे Dealer हिसाब (landed cost, stock planner, stock-कीमत असर), संकेत के कारण, बेहतर import preview; बड़ा उछाल अब हटता नहीं, जाँच के लिए दिखता है। <b>v2.1:</b> chart पर लिखे नंबर हटाकर हर chart के नीचे साफ़ सूची (रंग, नाम, ₹/टन) दी गई। <b>Version 2 (सुधरा हुआ):</b> ATR सही, edit में data नहीं खोता, WhatsApp DD/MM + preview, import/restore की जाँच, पहले से लिखे "परख" आँकड़े हटाए। <span class="disc" style="display:block">⚠ भाव का आधार एक जैसा रखें: वही brand, जगह, size, GST सहित/रहित, freight सहित/रहित, ₹/टन। अलग आधार मिलाने से range गलत आएगी।</span><div id="warn" class="alert" style="display:none"></div></div>
 <div class="card" id="dealer"><h3>🧮 Dealer हिसाब (v3) — सिर्फ़ गणित, कोई भविष्यवाणी नहीं, कोई अपने-आप ख़रीद नहीं</h3>
@@ -15601,9 +15603,9 @@ function mergeBaseHist(id,userRows){var base=(typeof BASE_HIST!=="undefined"&&BA
 function rows(id){return mergeBaseHist(id,(DB.data[id]||[]).slice()).sort(function(a,b){return a.date<b.date?-1:1;});}
 function fmt(n){return n==null||isNaN(n)?'—':'₹'+Math.round(n).toLocaleString('en-IN');}
 function today(){var t=new Date();t.setMinutes(t.getMinutes()-t.getTimezoneOffset());return t.toISOString().slice(0,10);}
-function tabs(){document.getElementById('tabs').innerHTML='<button class="'+(cur=='ms'?'on':'')+'" onclick="cur=\'ms\';render();scrollTo(0,0)">📋 मार्केट शीट / Market Sheet</button>'+C.map(function(c){return '<button class="'+(c.id==cur?'on':'')+'" onclick="cur=\''+c.id+'\';resetForm();render()">'+c.n+'</button>';}).join('')+'<button class="'+(cur=='fv'?'on':'')+'" onclick="cur=\'fv\';render();scrollTo(0,0)">⚖ लागत बनाम बाज़ार</button><button class="'+(cur=='val'?'on':'')+'" onclick="cur=\'val\';render();scrollTo(0,0)">📊 मूल्यांकन</button>'+[['pv','🎯 Probability + Volatility'],['prob','🎲 Probability (संभावना)'],['vol','🌊 Volatility (उतार-चढ़ाव)'],['sa','🧠 Smart Analytics'],['kh','✅ खरीद फ़ैसला'],['mk','📰 बाज़ार खबर'],['f7','📅 7 दिन का भाव']].map(function(t){return '<button class="'+(cur==t[0]?'on':'')+'" onclick="cur=\''+t[0]+'\';render();scrollTo(0,0)">'+t[1]+'</button>';}).join('');
+function tabs(){document.getElementById('tabs').innerHTML='<button class="'+(cur=='ms'?'on':'')+'" onclick="cur=\'ms\';render();scrollTo(0,0)">📋 मार्केट शीट / Market Sheet</button>'+C.map(function(c){return '<button class="'+(c.id==cur?'on':'')+'" onclick="cur=\''+c.id+'\';resetForm();render()">'+c.n+'</button>';}).join('')+'<button class="'+(cur=='fv'?'on':'')+'" onclick="cur=\'fv\';render();scrollTo(0,0)">⚖ लागत बनाम बाज़ार</button><button class="'+(cur=='val'?'on':'')+'" onclick="cur=\'val\';render();scrollTo(0,0)">📊 मूल्यांकन</button>'+[['pv','🎯 Probability + Volatility'],['prob','🎲 Probability (संभावना)'],['vol','🌊 Volatility (उतार-चढ़ाव)'],['sa','🧠 Smart Analytics'],['kh','✅ खरीद फ़ैसला'],['mk','📰 बाज़ार खबर'],['f7','📅 7 दिन का भाव'],['sp','📐 Kamdhenu फ़र्क (स्प्रेड)']].map(function(t){return '<button class="'+(cur==t[0]?'on':'')+'" onclick="cur=\''+t[0]+'\';render();scrollTo(0,0)">'+t[1]+'</button>';}).join('');
  document.getElementById('zoom').innerHTML=[['1M',30],['3M',90],['6M',180],['1Y',365],['All',0]].map(function(z){return '<button class="'+(zoomD==z[1]?'on':'')+'" onclick="zoomD='+z[1]+';render()">'+z[0]+'</button>';}).join('');}
-function render(){tabs();tsBar();nwTop();if(nwMode())return;if(khMode())return;if(saMode())return;if(pvMode())return;if(msMode())return;if(fvMode()||valMode())return;var r=rows(cur),a=SR.analyze(r),s=document.getElementById('status'),SG=SR.signal(r,sigOpt(cur)),SH=shortAdv(a,SG);
+function render(){tabs();tsBar();nwTop();if(spMode())return;if(nwMode())return;if(khMode())return;if(saMode())return;if(pvMode())return;if(msMode())return;if(fvMode()||valMode())return;var r=rows(cur),a=SR.analyze(r),s=document.getElementById('status'),SG=SR.signal(r,sigOpt(cur)),SH=shortAdv(a,SG);
  document.getElementById('samplebar').style.display=r.some(function(x){return x.sample;})?'block':'none';
  var W=[];if(LOADWARN)W.push(LOADWARN);if(WAERR)W.push(WAERR);if(r.length&&!r.some(function(x){return !x.wa;}))W.push('इस browser/link में आपके हाथ से डाले भाव नहीं हैं, सिर्फ़ 📲 WhatsApp भाव हैं। पुरानी फ़ाइल वाले भाव लाने हों तो: पुरानी फ़ाइल खोलें → नीचे "Data / Backup" में "Backup (JSON)" दबाएँ → फिर यहाँ नीचे "📥 मेरा data जोड़ें" से वो फ़ाइल चुनें।');if(r.some(function(x){return x.wa;}))W.push('📲 = WhatsApp फ़ाइल से आया भाव ('+WAN+' दिन जुड़े; browser में save नहीं होता, फ़ाइल से हर बार आता है)');if(r.length){var age=Math.round((new Date(today())-new Date(r[r.length-1].date))/864e5);if(age>3)W.push('आखिरी भाव '+age+' दिन पुराना है — संकेत पुराने हो सकते हैं।');}
  if(r.length&&r.length<80)W.push('सिर्फ़ '+r.length+' entries — लंबे संकेत के लिए कम से कम 80 चाहिए।');
@@ -16803,6 +16805,107 @@ function nwInitGl(){document.addEventListener('click',function(e){var t=e.target
 function nwAfter(){nwTrustBar();glApply(document.body);}
 nwInitGl();nqInit();
 var NW_RENDER0=render;render=function(){NW_RENDER0.apply(this,arguments);try{nwAfter();}catch(e){}};
+
+// ===SP-UI=== 📐 Kamdhenu फ़र्क (स्प्रेड) tab (sp_ui.js). Spliced by build_v5.js.
+// (A) Kamdhenu basic − Raipur Sponge PDRI   (B) Kamdhenu basic − Raipur Billet   (C) Kamdhenu basic − Mandi (Gobindgarh) Billet, per day.
+// Data = the page's own cleaned daily series (saClean(nwV(d))): long history (history_internet.js, inlined in the offline file) + rates.js daily entries
+// (confidence >= 0.6, Kamdhenu basic = 10-25mm list − 6000 from 23-Sep-2026). Every build/hourly deploy extends it automatically.
+// Date matching: SAME-DATE pairs only (same convention as the Market Sheet spread); a day with no Kamdhenu post is NOT filled with the last rate.
+var SP_KEY='steelRangeV5_sp',SP_C={},SP_CH={},SP_ST={A:{q:'',tol:'100',rng:'1y'},B:{q:'',tol:'100',rng:'1y'},C:{q:'',tol:'100',rng:'1y'}};
+function spLoad(){try{var o=JSON.parse(localStorage.getItem(SP_KEY)||'null');if(o)['A','B','C'].forEach(function(k){if(o[k]){SP_ST[k].q=String(o[k].q==null?'':o[k].q);SP_ST[k].tol=String(o[k].tol==null?'100':o[k].tol);if(o[k].rng=='all'||o[k].rng=='1y')SP_ST[k].rng=o[k].rng;}});}catch(e){}}
+function spSave(){try{localStorage.setItem(SP_KEY,JSON.stringify(SP_ST));}catch(e){}}
+function spN(n){return Math.abs(Math.round(n)).toLocaleString('en-IN');}
+function spS(n){return (n<0?'−':'')+'₹'+spN(n);}
+function spSC(n){return '<b style="color:'+(n<0?'#b02a1e':'#1f3b63')+'">'+spS(n)+'</b>';}
+function spT(d){return Date.parse(d+'T00:00:00Z')/864e5;}
+function spData(){var d=pvAsof(),k='SP'+nwKey(d);if(SP_C[k])return SP_C[k];
+ var V=nwV(d),K=saClean(V.kamdhenu,d),P=saClean(V.pdri_raipur,d),B=saClean(V.billet_raipur,d),M=saClean(V.billet_mandi,d);
+ function mk(id,oname,col,O){var om={};O.forEach(function(x){om[x.date]=x.price;});var rows=[];K.forEach(function(x){if(om[x.date]!=null)rows.push({d:x.date,k:x.price,o:om[x.date],s:x.price-om[x.date]});});
+  return {id:id,oname:oname,col:col,rows:rows,oFirst:O.length?O[0].date:null,oLast:O.length?O[O.length-1].date:null,oLastP:O.length?O[O.length-1].price:null};}
+ var out={d:d,kFirst:K.length?K[0].date:null,kLast:K.length?K[K.length-1].date:null,kLastP:K.length?K[K.length-1].price:null,A:mk('A','Sponge PDRI','PDRI',P),B:mk('B','Billet','Billet',B),C:mk('C','Mandi Billet','Mandi Billet',M)};
+ var km=K.reduce(function(m,x){return m==null||x.price<m?x.price:m;},null);out.kLow=km;out.kLowD=K.filter(function(x){return x.price===km;}).map(function(x){return x.date;});
+ ['A','B','C'].forEach(function(i){out[i].st=spStats(out[i]);});SP_C[k]=out;return out;}
+function spExt(list,max){var best=null,n=0;list.forEach(function(r){if(best==null||(max?r.s>best.s:r.s<best.s)){best=r;n=1;}else if(r.s===best.s){best=r;n++;}});return best?{r:best,n:n}:null;} // ties: latest date
+function spAvg(list){if(!list.length)return null;var t=0;list.forEach(function(r){t+=r.s;});return t/list.length;}
+function spPct(list,v){var lo=0,eq=0;list.forEach(function(r){if(r.s<v)lo++;else if(r.s===v)eq++;});return list.length?Math.round((lo+0.5*eq)/list.length*100):null;}
+function spStats(S){var R=S.rows;if(!R.length)return null;var last=R[R.length-1],from=addDays(last.d,-364),W=R.filter(function(r){return r.d>=from;});
+ return {n:R.length,first:R[0].d,last:last,wFrom:W[0].d,wN:W.length,hi:spExt(W,true),lo:spExt(W,false),ahi:spExt(R,true),alo:spExt(R,false),wAvg:spAvg(W),aAvg:spAvg(R),wPct:spPct(W,last.s),aPct:spPct(R,last.s),win:W};}
+function spChart(S,rng){var st=S.st,rows=rng=='all'?S.rows:st.win,W=340,H=190,L=50,Rt=8,T=10,Bt=22,pw=W-L-Rt,ph=H-T-Bt;if(rows.length<2)return '<div style="font-size:12px;color:#666">चार्ट के लिए इतिहास कम</div>';
+ var lo=Infinity,hi=-Infinity,i;rows.forEach(function(r){if(r.s<lo)lo=r.s;if(r.s>hi)hi=r.s;});var pad=Math.max((hi-lo)*0.06,50);lo-=pad;hi+=pad;
+ var t0=spT(rows[0].d),t1=spT(rows[rows.length-1].d),dt=t1-t0||1;
+ function X(d){return L+(spT(d)-t0)/dt*pw;}function Y(v){return T+(hi-v)/(hi-lo)*ph;}
+ var steps=[100,200,250,500,1000,2000,2500,5000],step=steps[steps.length-1];for(i=0;i<steps.length;i++){if((hi-lo)/steps[i]<=5){step=steps[i];break;}}
+ var g='',v;for(v=Math.ceil(lo/step)*step;v<=hi;v+=step){g+='<line x1="'+L+'" x2="'+(W-Rt)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="'+(v===0?'#b02a1e':'#e3e7ee')+'" stroke-width="'+(v===0?1.2:1)+'"'+(v===0?' stroke-dasharray="4 3"':'')+'/><text x="'+(L-4)+'" y="'+(Y(v)+3.5).toFixed(1)+'" font-size="10" text-anchor="end" fill="#555">'+(v<0?'−':'')+spN(v)+'</text>';}
+ var pts=rows.map(function(r){return X(r.d).toFixed(1)+','+Y(r.s).toFixed(1);}).join(' ');
+ var mx=spExt(rows,true).r,mn=spExt(rows,false).r,la=rows[rows.length-1];
+ function dot(r,c){return '<circle cx="'+X(r.d).toFixed(1)+'" cy="'+Y(r.s).toFixed(1)+'" r="4" fill="'+c+'" stroke="#fff" stroke-width="1.2"/>';}
+ var xl=[rows[0].d,rows[Math.floor(rows.length/2)].d,la.d].map(function(d,j){var p=d.split('-');return '<text x="'+X(d).toFixed(1)+'" y="'+(H-6)+'" font-size="10" fill="#555" text-anchor="'+(j==0?'start':j==2?'end':'middle')+'">'+p[2]+'-'+p[1]+'-'+p[0].slice(2)+'</text>';}).join('');
+ SP_CH[S.id]={col:S.col,rows:rows,t0:t0,dt:dt,L:L,pw:pw,W:W,H:H};
+ return '<svg data-sp="'+S.id+'" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid #dde3ee;border-radius:6px;touch-action:manipulation">'+g+'<polyline points="'+pts+'" fill="none" stroke="#1f3b63" stroke-width="1.6" stroke-linejoin="round"/>'+'<line id="sp_cur_'+S.id+'" x1="0" x2="0" y1="'+T+'" y2="'+(H-Bt)+'" stroke="#888" stroke-dasharray="3 3" style="display:none"/>'+dot(mx,'#1d7a38')+dot(mn,'#b02a1e')+dot(la,'#1f6fd0')+xl+'</svg>'+
+  '<div id="sp_tip_'+S.id+'" style="font-size:12px;margin-top:3px;min-height:16px;color:#333">चार्ट पर टच/क्लिक करें — उस तारीख का फ़र्क दिखेगा।</div>'+
+  '<div style="font-size:11px;color:#555">🟢 इस चार्ट का सबसे ऊँचा '+spS(mx.s)+' ('+dmy(mx.d)+') · 🔴 सबसे नीचा '+spS(mn.s)+' ('+dmy(mn.d)+') · 🔵 आखिरी '+spS(la.s)+' ('+dmy(la.d)+')</div>';}
+function spRow(lbl,e,S,cls){if(!e)return '<tr><td>'+lbl+'</td><td colspan="4">—</td></tr>';var r=e.r;return '<tr class="'+(cls||'')+'"><td><b>'+lbl+'</b></td><td>'+spSC(r.s)+(e.n>1?'<br><small>'+e.n+' दिन इसी फ़र्क पर</small>':'')+'</td><td>'+dmy(r.d)+'</td><td>₹'+spN(r.k)+'</td><td>₹'+spN(r.o)+'</td></tr>';}
+function spParse(s){s=String(s==null?'':s).replace(/[०-९]/g,function(c){return String(c.charCodeAt(0)-2406);}).replace(/[−–—]/g,'-').replace(/[,₹\s]/g,'');if(s===''||s==='-'||s==='+')return null;var v=+s;return isFinite(v)?v:NaN;}
+function spRes(id){var S=SP_C['SP'+nwKey(pvAsof())]||spData();S=S[id];var q=spParse(SP_ST[id].q);
+ if(q==null)return '<div style="font-size:12px;color:#666">ऊपर के box में figure डालें (जैसे 14000 या −500) — हर वह तारीख मिलेगी जब फ़र्क उतना था।</div>';
+ if(isNaN(q))return '<div style="font-size:13px;color:#b02a1e">सही संख्या डालें (जैसे 14000 या -500)।</div>';
+ var tl=spParse(SP_ST[id].tol);if(tl==null||isNaN(tl))tl=100;tl=Math.abs(tl);
+ var m=S.rows.filter(function(r){return Math.abs(r.s-q)<=tl;}).reverse(),h='<div style="font-size:13px;margin:4px 0"><b>'+(q<0?'−':'')+'₹'+spN(q)+'</b> '+(tl?'(±'+spN(tl)+': '+spS(q-tl)+' से '+spS(q+tl)+' तक)':'(ठीक इतना)')+' → <b>'+m.length+' दिन</b> मिले'+(S.rows.length?' · कुल '+S.rows.length+' दिन में से':'')+'</div>';
+ var oname=S.col;
+ if(!m.length){var nr=S.rows.slice().sort(function(a,b){return (Math.abs(a.s-q)-Math.abs(b.s-q))||(a.d<b.d?1:-1);}).slice(0,3);
+  return h+'<div style="font-size:12px;color:#666">इस figure पर कोई दिन नहीं। सबसे पास के दिन:</div>'+spTbl(nr,oname,q,tl);}
+ var w=S.st&&S.st.win?m.filter(function(r){return r.d>=S.st.wFrom;}).length:0;
+ h+='<div style="font-size:12px;color:#444;margin-bottom:3px">सबसे नया: '+dmy(m[0].d)+' · सबसे पुराना: '+dmy(m[m.length-1].d)+' · पिछले 52 हफ़्ते में: '+w+' दिन</div>';
+ return h+spTbl(m,oname,q,tl);}
+function spTbl(list,oname,q,tl){return '<div class="spscroll"><table class="fvt"><tr><th>तारीख</th><th>Kamdhenu</th><th>'+oname+'</th><th>फ़र्क</th></tr>'+list.map(function(r){var dv=r.s-q;return '<tr><td>'+dmy(r.d)+'</td><td>₹'+spN(r.k)+'</td><td>₹'+spN(r.o)+'</td><td>'+spSC(r.s)+(tl||dv?'<br><small style="color:#666">('+(dv>=0?'+':'−')+spN(dv)+')</small>':'')+'</td></tr>';}).join('')+'</table></div>';}
+function spSec(S){var id=S.id,st=S.st,nm=id=='A'?'A) Kamdhenu basic − Raipur Sponge PDRI':id=='B'?'B) Kamdhenu basic − Raipur Billet':'C) Kamdhenu basic − Mandi (Gobindgarh) Billet',h='<div class="spsec" id="spsec_'+id+'"><h3>'+nm+'</h3>';
+ if(!st)return h+'<div class="alert">इतिहास नहीं मिला — साझा तारीख का भाव चाहिए।</div></div>';
+ var l=st.last,rngW=st.hi.r.s-st.lo.r.s,pos=rngW>0?Math.max(0,Math.min(100,(l.s-st.lo.r.s)/rngW*100)):50;
+ h+='<div class="spnow"><div style="font-size:12px;color:#555">आखिरी फ़र्क ('+dmy(l.d)+')</div><div style="font-size:28px;font-weight:800;line-height:1.15">'+spSC(l.s)+'</div><div style="font-size:13px">Kamdhenu ₹'+spN(l.k)+' − '+S.oname+' ₹'+spN(l.o)+'</div>';
+ var nt=[];if(S.oLast&&S.oLast!==l.d)nt.push(S.oname+' का आखिरी भाव '+dmy(S.oLast));
+ var D=SP_C['SP'+nwKey(pvAsof())];if(D&&D.kLast&&D.kLast!==l.d)nt.push('Kamdhenu का आखिरी भाव '+dmy(D.kLast));
+ if(nt.length)h+='<div style="font-size:11px;color:#8a5a00;margin-top:2px">नोट: फ़र्क सिर्फ़ उसी तारीख का जब दोनों के भाव मिले। '+nt.join(' · ')+'.</div>';
+ h+='</div>'+
+ '<div style="font-size:12px;margin:8px 0 2px"><b>52 हफ़्ते की range में आज की जगह:</b> '+Math.round(pos)+'% ऊपर <small>(0% = 52 हफ़्ते का सबसे नीचा, 100% = सबसे ऊँचा)</small></div>'+
+ '<div class="spbar"><div class="spmk" style="left:'+pos.toFixed(1)+'%"></div></div><div class="spbl"><span>नीचा '+spS(st.lo.r.s)+'</span><span>ऊँचा '+spS(st.hi.r.s)+'</span></div>'+
+ '<div style="font-size:12px;margin:6px 0">Percentile (आज से कम फ़र्क वाले दिन): 52 हफ़्ते में <b>'+st.wPct+'</b> · पूरे data में <b>'+st.aPct+'</b> <small>(0 = अब तक का सबसे कम, 100 = सबसे ज़्यादा)</small></div>'+
+ '<div style="overflow:auto"><table class="fvt"><tr><th></th><th>फ़र्क</th><th>तारीख</th><th>Kamdhenu</th><th>'+S.col+'</th></tr>'+
+ spRow('📈 52 हफ़्ते का ऊँचा (High)',st.hi,S,'')+spRow('📉 52 हफ़्ते का नीचा (Low)',st.lo,S,'')+
+ spRow('⬆ अब तक का सबसे ऊँचा',st.ahi,S,'')+spRow('⬇ अब तक का सबसे नीचा',st.alo,S,'')+'</table></div>'+
+ '<div style="font-size:11px;color:#555;margin:3px 0">52 हफ़्ते = '+dmy(st.wFrom)+' से '+dmy(l.d)+' ('+st.wN+' दिन) · "अब तक" = '+dmy(st.first)+' से ('+st.n+' दिन; '+S.col+' का data '+dmy(S.oFirst)+' से, Kamdhenu का '+dmy(D?D.kFirst:st.first)+' से)।</div>'+
+ '<div style="font-size:12px;margin:4px 0"><b>औसत फ़र्क:</b> 52 हफ़्ते '+spS(st.wAvg)+' · अब तक '+spS(st.aAvg)+' · आज का फ़र्क औसत (52 हफ़्ते) से '+(l.s>=st.wAvg?'ऊपर ':'नीचे ')+spS(Math.abs(l.s-st.wAvg))+'</div>';
+ var rg=SP_ST[id].rng;
+ h+='<div style="margin:8px 0 4px;font-size:13px"><b>📉 फ़र्क का चार्ट</b> <button class="spb'+(rg=='1y'?' on':'')+'" data-sprng="'+id+':1y">1 साल</button><button class="spb'+(rg=='all'?' on':'')+'" data-sprng="'+id+':all">पूरा data</button></div>'+spChart(S,rg)+
+ '<div style="margin:10px 0 4px;font-size:13px"><b>🔎 figure खोजें</b> — किन तारीखों पर फ़र्क इतना था</div>'+
+ '<div class="spq"><input type="text" id="sp_q_'+id+'" data-sp="'+id+':q" value="'+SR.esc(SP_ST[id].q)+'" placeholder="जैसे 14000 या −500" autocomplete="off" style="width:130px"> <button class="spb" data-spneg="'+id+'" title="घटा (−) लगाएँ/हटाएँ">+/−</button> '+
+ '<label style="font-size:12px">± अंतर <input type="number" min="0" step="50" inputmode="numeric" id="sp_t_'+id+'" data-sp="'+id+':tol" value="'+SR.esc(SP_ST[id].tol)+'" style="width:70px"></label> <small style="color:#666">(0 = ठीक वही)</small></div>'+
+ '<div id="sp_res_'+id+'">'+spRes(id)+'</div></div>';
+ return h;}
+function spLow(D){if(D.kLow==null||!D.kLowD.length)return '';var f=D.kLowD[0],l=D.kLowD[D.kLowD.length-1],rows='',cur=D.kLastP;
+ ['A','B','C'].forEach(function(i){var S=D[i],st=S.st;if(!st)return;var R=S.rows.filter(function(r){return r.k===D.kLow;});if(!R.length){rows+='<tr><td>'+S.col+'</td><td colspan="3"><small>उन दिनों का भाव नहीं</small></td></tr>';return;}
+  var mn=Math.min.apply(null,R.map(function(r){return r.s;})),mx=Math.max.apply(null,R.map(function(r){return r.s;})),av=R.reduce(function(a,r){return a+r.s;},0)/R.length,df=st.last.s-av;
+  rows+='<tr><td><b>Kamdhenu − '+S.col+'</b></td><td>'+spSC(av)+'<br><small>'+(mn===mx?'':spS(mn)+' से '+spS(mx)+' · ')+R.length+' दिन</small></td><td>'+spSC(st.last.s)+'<br><small>'+dmy(st.last.d)+'</small></td><td>'+(df>=0?'+':'−')+'₹'+spN(df)+'</td></tr>';});
+ return '<div class="spsec" style="border-top:none;margin-top:8px"><div style="background:#fff8e1;border:1px solid #f0d27a;border-radius:8px;padding:6px 10px"><b>📌 Kamdhenu के सबसे नीचे भाव के समय (तुलना)</b><div style="font-size:12px;margin:3px 0">Kamdhenu basic का सबसे नीचा भाव: <b>₹'+spN(D.kLow)+'</b> ('+(f===l?dmy(f):dmy(f)+' से '+dmy(l))+') · आखिरी ₹'+spN(cur)+' ('+dmy(D.kLast)+'): <b>+₹'+spN(cur-D.kLow)+'</b> ऊपर</div>'+
+ '<div style="overflow:auto"><table class="fvt"><tr><th>फ़र्क</th><th>उस समय (औसत)</th><th>आखिरी</th><th>आखिरी − उस समय</th></tr>'+rows+'</table></div></div></div>';}
+function spHtml(){var D=spData(),h='<h3>📐 Kamdhenu फ़र्क (स्प्रेड) — Sponge PDRI और Billet से</h3>'+
+ '<div style="font-size:12px;color:#444;line-height:1.45">फ़र्क = <b>Kamdhenu NXT basic</b> (10-25mm; 23-09-2026 से list − ₹6,000, उससे पहले का भाव पहले से basic) − <b>Raipur Sponge PDRI</b> (A), <b>Raipur Billet</b> (B) या <b>Mandi (Gobindgarh) Billet</b> (C)। सिर्फ़ उन तारीखों का फ़र्क जिस दिन दोनों के भाव मिले — किसी दिन Kamdhenu का भाव न हो तो पिछला भाव नहीं लिया जाता। नए भाव हर बार अपने-आप जुड़ते हैं। ये गणित के आँकड़े हैं, सलाह नहीं।</div>';
+ h+=spLow(D)+spSec(D.A)+spSec(D.B)+spSec(D.C);return h;}
+function spMode(){var on=cur=='sp',p=document.getElementById('sppanel');document.body.classList.toggle('spmode',on);if(p)p.style.display=on?'block':'none';
+ if(on){document.body.classList.remove('fvmode','valmode','msmode','pvmode','samode','khmode','nwmode');['fvpanel','valpanel','mspanel','pvpanel','sapanel','khpanel','mkpanel','f7panel'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+  if(p){try{p.innerHTML=spHtml();}catch(e){p.innerHTML='<div class="alert">गलती: '+SR.esc(String(e&&e.message||e))+'</div>';}}}
+ return on;}
+function spUpd(id){var e=document.getElementById('sp_res_'+id);if(e){try{e.innerHTML=spRes(id);}catch(x){e.innerHTML='<div class="alert">'+SR.esc(String(x&&x.message||x))+'</div>';}}}
+function spInit(){spLoad();
+ document.addEventListener('input',function(e){var t=e.target,a=t&&t.getAttribute&&t.getAttribute('data-sp');if(!a||a.indexOf(':')<0)return;var p=a.split(':');if(!SP_ST[p[0]])return;SP_ST[p[0]][p[1]]=t.value;spSave();spUpd(p[0]);});
+ document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+  var b=t.closest('[data-sprng]');if(b){var p=b.getAttribute('data-sprng').split(':');SP_ST[p[0]].rng=p[1];spSave();render();return;}
+  b=t.closest('[data-spneg]');if(b){var id=b.getAttribute('data-spneg'),q=String(SP_ST[id].q||'').replace(/[−–—]/g,'-').trim();q=q.charAt(0)=='-'?q.slice(1):'-'+q;SP_ST[id].q=q;spSave();var inp=document.getElementById('sp_q_'+id);if(inp)inp.value=q;spUpd(id);return;}
+  var s=t.closest('svg[data-sp]');if(s){var id2=s.getAttribute('data-sp'),C=SP_CH[id2];if(!C)return;var r=s.getBoundingClientRect(),fx=(e.clientX-r.left)/(r.width||1)*C.W,tt=C.t0+(fx-C.L)/C.pw*C.dt,best=null,bd=1e9;
+   C.rows.forEach(function(x){var dd=Math.abs(spT(x.d)-tt);if(dd<bd){bd=dd;best=x;}});if(!best)return;
+   var tip=document.getElementById('sp_tip_'+id2),ln=document.getElementById('sp_cur_'+id2),xx=C.L+(spT(best.d)-C.t0)/C.dt*C.pw;
+   if(ln){ln.setAttribute('x1',xx);ln.setAttribute('x2',xx);ln.style.display='';}
+   if(tip)tip.innerHTML='<b>'+dmy(best.d)+'</b>: फ़र्क '+spSC(best.s)+' · Kamdhenu ₹'+spN(best.k)+' − '+C.col+' ₹'+spN(best.o);}});}
+spInit();
 
 WAN=waMerge();
 var fd=document.getElementById('fd'),fp=document.getElementById('fp'),fh=document.getElementById('fh'),fl=document.getElementById('fl'),editnote=document.getElementById('editnote');
