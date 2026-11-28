@@ -2171,10 +2171,11 @@ function spData(){var d=pvAsof(),k='SP'+nwKey(d);if(SP_C[k])return SP_C[k];
 function spExt(list,max){var best=null,n=0;list.forEach(function(r){if(best==null||(max?r.s>best.s:r.s<best.s)){best=r;n=1;}else if(r.s===best.s){best=r;n++;}});return best?{r:best,n:n}:null;} // ties: latest date
 function spAvg(list){if(!list.length)return null;var t=0;list.forEach(function(r){t+=r.s;});return t/list.length;}
 function spPct(list,v){var lo=0,eq=0;list.forEach(function(r){if(r.s<v)lo++;else if(r.s===v)eq++;});return list.length?Math.round((lo+0.5*eq)/list.length*100):null;}
-function spStats(S){var R=S.rows;if(!R.length)return null;var last=R[R.length-1],from=addDays(last.d,-364),W=R.filter(function(r){return r.d>=from;});
- return {n:R.length,first:R[0].d,last:last,wFrom:W[0].d,wN:W.length,hi:spExt(W,true),lo:spExt(W,false),ahi:spExt(R,true),alo:spExt(R,false),wAvg:spAvg(W),aAvg:spAvg(R),wPct:spPct(W,last.s),aPct:spPct(R,last.s),win:W};}
+function spStats(S){var R=S.rows;if(!R.length)return null;var last=R[R.length-1],from=addDays(last.d,-364),W=R.filter(function(r){return r.d>=from;}),mFrom=addDays(last.d,-29),M=R.filter(function(r){return r.d>=mFrom;});
+ return {n:R.length,first:R[0].d,last:last,wFrom:W[0].d,wN:W.length,mFrom:M.length?M[0].d:null,mN:M.length,hi:spExt(W,true),lo:spExt(W,false),ahi:spExt(R,true),alo:spExt(R,false),wAvg:spAvg(W),aAvg:spAvg(R),mAvg:spAvg(M),wPct:spPct(W,last.s),aPct:spPct(R,last.s),win:W};}
+function spDelta(now,avg){if(avg==null||now==null)return '—';var d=now-avg;if(!d)return '<span style="color:#555;font-weight:700">आज का फ़र्क औसत के बराबर</span>';var up=d>0,col=up?'#1d7a38':'#b02a1e';return '<span style="color:'+col+';font-weight:700">आज का फ़र्क औसत से '+(up?'+':'−')+'₹'+spN(d)+' '+(up?'ऊपर':'नीचे')+'</span>';}
 function spChart(S,rng){var st=S.st,rows=rng=='all'?S.rows:st.win,W=340,H=190,L=50,Rt=8,T=10,Bt=22,pw=W-L-Rt,ph=H-T-Bt;if(rows.length<2)return '<div style="font-size:12px;color:#666">चार्ट के लिए इतिहास कम</div>';
- var lo=Infinity,hi=-Infinity,i;rows.forEach(function(r){if(r.s<lo)lo=r.s;if(r.s>hi)hi=r.s;});var pad=Math.max((hi-lo)*0.06,50);lo-=pad;hi+=pad;
+ var lo=Infinity,hi=-Infinity,i,avg=rng=='all'?st.aAvg:st.wAvg;rows.forEach(function(r){if(r.s<lo)lo=r.s;if(r.s>hi)hi=r.s;});if(avg!=null){if(avg<lo)lo=avg;if(avg>hi)hi=avg;}var pad=Math.max((hi-lo)*0.06,50);lo-=pad;hi+=pad;
  var t0=spT(rows[0].d),t1=spT(rows[rows.length-1].d),dt=t1-t0||1;
  function X(d){return L+(spT(d)-t0)/dt*pw;}function Y(v){return T+(hi-v)/(hi-lo)*ph;}
  var steps=[100,200,250,500,1000,2000,2500,5000],step=steps[steps.length-1];for(i=0;i<steps.length;i++){if((hi-lo)/steps[i]<=5){step=steps[i];break;}}
@@ -2184,10 +2185,12 @@ function spChart(S,rng){var st=S.st,rows=rng=='all'?S.rows:st.win,W=340,H=190,L=
  function dot(r,c){return '<circle cx="'+X(r.d).toFixed(1)+'" cy="'+Y(r.s).toFixed(1)+'" r="4" fill="'+c+'" stroke="#fff" stroke-width="1.2"/>';}
  var xl=[rows[0].d,rows[Math.floor(rows.length/2)].d,la.d].map(function(d,j){var p=d.split('-');return '<text x="'+X(d).toFixed(1)+'" y="'+(H-6)+'" font-size="10" fill="#555" text-anchor="'+(j==0?'start':j==2?'end':'middle')+'">'+p[2]+'-'+p[1]+'-'+p[0].slice(2)+'</text>';}).join('');
  SP_CH[S.id]={col:S.col,rows:rows,t0:t0,dt:dt,L:L,pw:pw,W:W,H:H};
- return '<svg data-sp="'+S.id+'" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid #dde3ee;border-radius:6px;touch-action:manipulation">'+g+'<polyline points="'+pts+'" fill="none" stroke="#1f3b63" stroke-width="1.6" stroke-linejoin="round"/>'+'<line id="sp_cur_'+S.id+'" x1="0" x2="0" y1="'+T+'" y2="'+(H-Bt)+'" stroke="#888" stroke-dasharray="3 3" style="display:none"/>'+dot(mx,'#1d7a38')+dot(mn,'#b02a1e')+dot(la,'#1f6fd0')+xl+'</svg>'+
+ var avgLn=avg==null?'':'<line x1="'+L+'" x2="'+(W-Rt)+'" y1="'+Y(avg).toFixed(1)+'" y2="'+Y(avg).toFixed(1)+'" stroke="#c47b12" stroke-width="1.4" stroke-dasharray="6 4"/>'+'<text x="'+(W-Rt)+'" y="'+(Y(avg)-5).toFixed(1)+'" font-size="9" text-anchor="end" fill="#c47b12">औसत '+spS(avg)+'</text>';
+ return '<svg data-sp="'+S.id+'" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid #dde3ee;border-radius:6px;touch-action:manipulation">'+g+avgLn+'<polyline points="'+pts+'" fill="none" stroke="#1f3b63" stroke-width="1.6" stroke-linejoin="round"/>'+'<line id="sp_cur_'+S.id+'" x1="0" x2="0" y1="'+T+'" y2="'+(H-Bt)+'" stroke="#888" stroke-dasharray="3 3" style="display:none"/>'+dot(mx,'#1d7a38')+dot(mn,'#b02a1e')+dot(la,'#1f6fd0')+xl+'</svg>'+
   '<div id="sp_tip_'+S.id+'" style="font-size:12px;margin-top:3px;min-height:16px;color:#333">चार्ट पर टच/क्लिक करें — उस तारीख का फ़र्क दिखेगा।</div>'+
-  '<div style="font-size:11px;color:#555">🟢 इस चार्ट का सबसे ऊँचा '+spS(mx.s)+' ('+dmy(mx.d)+') · 🔴 सबसे नीचा '+spS(mn.s)+' ('+dmy(mn.d)+') · 🔵 आखिरी '+spS(la.s)+' ('+dmy(la.d)+')</div>';}
+  '<div style="font-size:11px;color:#555">🟢 इस चार्ट का सबसे ऊँचा '+spS(mx.s)+' ('+dmy(mx.d)+') · 🔴 सबसे नीचा '+spS(mn.s)+' ('+dmy(mn.d)+') · 🔵 आखिरी '+spS(la.s)+' ('+dmy(la.d)+')'+(avg==null?'':' · <span style="color:#c47b12">➖ औसत '+spS(avg)+'</span>')+'</div>';}
 function spRow(lbl,e,S,cls){if(!e)return '<tr><td>'+lbl+'</td><td colspan="4">—</td></tr>';var r=e.r;return '<tr class="'+(cls||'')+'"><td><b>'+lbl+'</b></td><td>'+spSC(r.s)+(e.n>1?'<br><small>'+e.n+' दिन इसी फ़र्क पर</small>':'')+'</td><td>'+dmy(r.d)+'</td><td>₹'+spN(r.k)+'</td><td>₹'+spN(r.o)+'</td></tr>';}
+function spAvgRow(lbl,avg,n,from,to){if(avg==null)return '<tr><td>'+lbl+'</td><td colspan="4">—</td></tr>';return '<tr><td><b>'+lbl+'</b></td><td>'+spSC(avg)+'</td><td colspan="3"><small>'+(from&&to?dmy(from)+' से '+dmy(to)+' · ':'')+n+' दिन</small></td></tr>';}
 function spParse(s){s=String(s==null?'':s).replace(/[०-९]/g,function(c){return String(c.charCodeAt(0)-2406);}).replace(/[−–—]/g,'-').replace(/[,₹\s]/g,'');if(s===''||s==='-'||s==='+')return null;var v=+s;return isFinite(v)?v:NaN;}
 function spRes(id){var S=SP_C['SP'+nwKey(pvAsof())]||spData();S=S[id];var q=spParse(SP_ST[id].q);
  if(q==null)return '<div style="font-size:12px;color:#666">ऊपर के box में figure डालें (जैसे 14000 या −500) — हर वह तारीख मिलेगी जब फ़र्क उतना था।</div>';
@@ -2208,15 +2211,23 @@ function spSec(S){var id=S.id,st=S.st,nm=id=='A'?'A) Kamdhenu basic − Raipur S
  var nt=[];if(S.oLast&&S.oLast!==l.d)nt.push(S.oname+' का आखिरी भाव '+dmy(S.oLast));
  var D=SP_C['SP'+nwKey(pvAsof())];if(D&&D.kLast&&D.kLast!==l.d)nt.push('Kamdhenu का आखिरी भाव '+dmy(D.kLast));
  if(nt.length)h+='<div style="font-size:11px;color:#8a5a00;margin-top:2px">नोट: फ़र्क सिर्फ़ उसी तारीख का जब दोनों के भाव मिले। '+nt.join(' · ')+'.</div>';
+ function spAvgBox(title,avg,n,from,to){return '<div style="background:#fff;border:1px solid #e3e7ee;border-radius:8px;padding:6px 8px;margin-top:6px"><div style="font-size:12px;color:#555">'+title+(n?' <small>('+n+' दिन'+(from&&to?' · '+dmy(from)+' से '+dmy(to):'')+')</small>':'')+'</div><div style="font-size:20px;font-weight:800;line-height:1.2">'+spS(avg)+'</div><div style="font-size:13px;margin-top:2px">'+spDelta(l.s,avg)+'</div></div>';}
+ h+='<div class="spavg" style="margin-top:8px"><b style="font-size:14px">📊 औसत फ़र्क — आज कितना फ़र्क है</b>'+
+  spAvgBox('52 हफ़्ते का औसत',st.wAvg,st.wN,st.wFrom,l.d)+
+  spAvgBox('अब तक का औसत (पूरा data)',st.aAvg,st.n,st.first,l.d)+
+  (st.mAvg==null?'':spAvgBox('पिछले 30 दिन का औसत',st.mAvg,st.mN,st.mFrom,l.d))+
+  '</div>';
  h+='</div>'+
  '<div style="font-size:12px;margin:8px 0 2px"><b>52 हफ़्ते की range में आज की जगह:</b> '+Math.round(pos)+'% ऊपर <small>(0% = 52 हफ़्ते का सबसे नीचा, 100% = सबसे ऊँचा)</small></div>'+
  '<div class="spbar"><div class="spmk" style="left:'+pos.toFixed(1)+'%"></div></div><div class="spbl"><span>नीचा '+spS(st.lo.r.s)+'</span><span>ऊँचा '+spS(st.hi.r.s)+'</span></div>'+
  '<div style="font-size:12px;margin:6px 0">Percentile (आज से कम फ़र्क वाले दिन): 52 हफ़्ते में <b>'+st.wPct+'</b> · पूरे data में <b>'+st.aPct+'</b> <small>(0 = अब तक का सबसे कम, 100 = सबसे ज़्यादा)</small></div>'+
  '<div style="overflow:auto"><table class="fvt"><tr><th></th><th>फ़र्क</th><th>तारीख</th><th>Kamdhenu</th><th>'+S.col+'</th></tr>'+
  spRow('📈 52 हफ़्ते का ऊँचा (High)',st.hi,S,'')+spRow('📉 52 हफ़्ते का नीचा (Low)',st.lo,S,'')+
- spRow('⬆ अब तक का सबसे ऊँचा',st.ahi,S,'')+spRow('⬇ अब तक का सबसे नीचा',st.alo,S,'')+'</table></div>'+
- '<div style="font-size:11px;color:#555;margin:3px 0">52 हफ़्ते = '+dmy(st.wFrom)+' से '+dmy(l.d)+' ('+st.wN+' दिन) · "अब तक" = '+dmy(st.first)+' से ('+st.n+' दिन; '+S.col+' का data '+dmy(S.oFirst)+' से, Kamdhenu का '+dmy(D?D.kFirst:st.first)+' से)।</div>'+
- '<div style="font-size:12px;margin:4px 0"><b>औसत फ़र्क:</b> 52 हफ़्ते '+spS(st.wAvg)+' · अब तक '+spS(st.aAvg)+' · आज का फ़र्क औसत (52 हफ़्ते) से '+(l.s>=st.wAvg?'ऊपर ':'नीचे ')+spS(Math.abs(l.s-st.wAvg))+'</div>';
+ spAvgRow('📊 52 हफ़्ते का औसत',st.wAvg,st.wN,st.wFrom,l.d)+
+ spRow('⬆ अब तक का सबसे ऊँचा',st.ahi,S,'')+spRow('⬇ अब तक का सबसे नीचा',st.alo,S,'')+
+ spAvgRow('📊 अब तक का औसत',st.aAvg,st.n,st.first,l.d)+
+ (st.mAvg==null?'':spAvgRow('📊 30 दिन का औसत',st.mAvg,st.mN,st.mFrom,l.d))+'</table></div>'+
+ '<div style="font-size:11px;color:#555;margin:3px 0">52 हफ़्ते = '+dmy(st.wFrom)+' से '+dmy(l.d)+' ('+st.wN+' दिन) · "अब तक" = '+dmy(st.first)+' से ('+st.n+' दिन; '+S.col+' का data '+dmy(S.oFirst)+' से, Kamdhenu का '+dmy(D?D.kFirst:st.first)+' से)।</div>';
  var rg=SP_ST[id].rng;
  h+='<div style="margin:8px 0 4px;font-size:13px"><b>📉 फ़र्क का चार्ट</b> <button class="spb'+(rg=='1y'?' on':'')+'" data-sprng="'+id+':1y">1 साल</button><button class="spb'+(rg=='all'?' on':'')+'" data-sprng="'+id+':all">पूरा data</button></div>'+spChart(S,rg)+
  '<div style="margin:10px 0 4px;font-size:13px"><b>🔎 figure खोजें</b> — किन तारीखों पर फ़र्क इतना था</div>'+
